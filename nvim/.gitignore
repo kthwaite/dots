@@ -1,0 +1,3 @@
+lazy/
+lua/plugins/extras/*.lua
+!lua/plugins/extras/init.lua
