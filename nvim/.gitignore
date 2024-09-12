@@ -1,3 +1,4 @@
 lazy/
+lazy-lock.json
 lua/plugins/extras/*.lua
 !lua/plugins/extras/init.lua
