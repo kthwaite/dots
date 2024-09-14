@@ -37,6 +37,15 @@ return {
 			}
 		end,
 	},
+	{
+		"danymat/neogen",
+		config = function()
+			require("neogen").setup({ snippet_engine = "luasnip" })
+		end,
+		keys = {
+			{ "<leader>gn", "<cmd>Neogen<cr>", desc = "Neogen" },
+		},
+	},
 	-- splitting/joining blocks of code using treesitter
 	--[[{
 		"Wansmer/treesj",
