@@ -1,0 +1,6 @@
+## Utility
+snippet prex Print, then execute
+	function print_and_execute() {
+	  echo "+ $@" >&2 
+	  "$@" 
+	}
