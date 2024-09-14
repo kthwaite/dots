@@ -2,8 +2,8 @@ local M = {}
 
 ---@param event string # event name
 ---@param pattern string # pattern to match
----@param callback function # callback function
----@param opts table # options passed to nvim_create_autocmd
+---@param callback string|function # callback command or function
+---@param opts? table # options passed to nvim_create_autocmd
 M.au = function(event, pattern, callback, opts)
 	local cbtype = "command"
 	if type(callback) == "function" then
@@ -20,8 +20,8 @@ M.map = vim.keymap.set
 
 ---Convenience function to create a normal mode keymap
 ---@param capt string # keymap capture
----@param repl string # keymap replacement
----@param opts table # options passed to nvim_set_keymap
+---@param repl string|function # keymap replacement
+---@param opts? table # options passed to nvim_set_keymap
 M.nnoremap = function(capt, repl, opts)
 	opts = opts or {}
 	opts["noremap"] = true
@@ -30,8 +30,8 @@ end
 
 ---Convenience function to create an insert mode keymap
 ---@param capt string # keymap capture
----@param repl string # keymap replacement
----@param opts table # options passed to nvim_set_keymap
+---@param repl string|function # keymap replacement
+---@param opts? table # options passed to nvim_set_keymap
 M.inoremap = function(capt, repl, opts)
 	opts = opts or {}
 	opts["noremap"] = true
@@ -53,5 +53,18 @@ M.version_string = function()
 	end
 	return version_line
 end
+
+M.default_ignore_filetypes = {
+	"",
+	"TelescopePrompt",
+	"alpha",
+	"cmp_menu",
+	"health",
+	"mason",
+	"mason-lspconfig",
+	"noice",
+	"none",
+	"terminal",
+}
 
 return M

@@ -1,0 +1,32 @@
+## Main
+# main
+snippet main
+	int main(int argc, char *argv[])
+	{
+		${0}
+	}
+## Preprocessors
+# header include guard
+snippet once
+	#ifndef ${1:`toupper(vim_snippets#Filename('$1_H', 'UNTITLED_H'))`}
+
+	#define $1
+
+	${0}
+
+	#endif /* end of include guard: $1 */
+## Control
+# switch
+snippet switch
+	switch (${1:/* variable */}) {
+		case ${2:/* variable case */}:
+			${3}
+			${4:break;}${5}
+		default:
+			${6}
+	}
+# if
+snippet if
+	if (${1:true}) {
+		${0:${VISUAL}}
+	}

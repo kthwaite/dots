@@ -1,0 +1,46 @@
+## Control flow
+# match
+snippet match Pattern matching
+	match ${1:expression}:
+		case ${2:pattern_1}:
+			${3:pass}
+		case _:
+			${0:pass}
+
+## Class
+# new-style class
+snippet clai
+	class ${1:class_name}:
+		"""${2:description}"""
+		def __init__(self, ${3:args}):
+			${0}
+
+## logging
+# log
+snippet log
+	import logging
+
+	logger = logging.getLogger(__name__)
+# basicConfig
+snippet logb
+	logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s [%(levelname)s] - %(message)s")
+
+
+## Library-specific
+# pydantic
+snippet pyd
+	class ${1:class_name}(BaseModel):
+		${0}
+
+# typer
+snippet typ
+	import typer
+
+	app = typer.Typer(no_args_is_help=True)
+
+	@app.command('${1:command_name}')
+	def main():
+		${0}
+
+	if __name__ == "__main__":
+		app()

@@ -1,5 +1,6 @@
 -- ==== Prelims
 local util = require("core.utility")
+local ignore_filetypes = util.default_ignore_filetypes
 local map = util.map
 local nnoremap = util.nnoremap
 local inoremap = util.inoremap
@@ -30,8 +31,12 @@ vim.opt.lazyredraw = false -- faster macro invocation
 vim.opt.title = true -- set window title
 vim.opt.titlestring = "%t" -- ibid
 -- current directory is always window-local
--- vim.cmd([[autocmd BufEnter * lcd %:p:h]])
-au("BufEnter", "*", "lcd %:p:h")
+au("BufEnter", "*", function(ev)
+	local buf = vim.bo[ev.buf]
+	if buf.buftype ~= "terminal" and vim.tbl_contains(ignore_filetypes, buf.filetype) then
+		vim.cmd("lcd %:p:h")
+	end
+end)
 
 -- ==== Search ==================================================================
 vim.opt.incsearch = true -- show matches while you type
@@ -62,6 +67,7 @@ vim.opt.softtabstop = 4 -- number of tab-spaces while editing
 vim.opt.expandtab = true -- tabs are spaces
 vim.opt.tabstop = 4 -- tabs are worth 4 spaces
 vim.opt.list = false -- don't display tabs
+vim.opt.formatoptions:remove("o") -- remove comment insertion
 
 -- ==== UI ======================================================================
 vim.opt.cursorline = true -- highlight current line
@@ -72,7 +78,7 @@ vim.opt.number = true -- line numbers on
 vim.opt.relativenumber = true -- for fast vertical movement
 vim.opt.linespace = 0 -- no extra spaces between rows
 -- mkview preserves EVERYTHING
-vim.cmd([[set vop=cursor,folds,options,slash,unix ]])
+vim.opt.vop = "cursor,folds,options,slash,unix"
 vim.opt.virtualedit = "onemore" -- cursor after EOL
 vim.opt.showmatch = true -- show search matches
 vim.opt.wildmenu = true -- show list for autocomplete
@@ -86,11 +92,11 @@ inoremap("jk", "<esc>")
 inoremap("<esc>", "<nop>")
 -- # splits
 -- remap split navigation
-noremap("<C-h>", "<C-w>h")
-noremap("<C-j>", "<C-w>j")
-noremap("<C-k>", "<C-w>k")
-noremap("<C-l>", "<C-w>l")
+noremap("<C-h>", "<C-w>h", { desc = "Move to left split." })
+noremap("<C-j>", "<C-w>j", { desc = "Move to down split." })
+noremap("<C-k>", "<C-w>k", { desc = "Move to up split." })
+noremap("<C-l>", "<C-w>l", { desc = "Move to right split." })
 -- horizontal split to vertical split
-nnoremap("<leader>hv", "<C-w>t<C-w>H")
+nnoremap("<leader>hv", "<C-w>t<C-w>H", { desc = "Horizontal split to vertical split." })
 -- vertical split to horizontal split
-nnoremap("<leader>vh", "<C-w>t<C-w>K")
+nnoremap("<leader>vh", "<C-w>t<C-w>K", { desc = "Vertical split to horizontal split." })
