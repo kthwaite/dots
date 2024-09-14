@@ -1,0 +1,25 @@
+# vi: set ft=gitconfig
+[user]
+    name = kthwaite
+    email = 28732700+kthwaite@users.noreply.github.com
+[init]
+	defaultBranch = main
+[core]
+	editor = nvim
+[diff]
+	algorithm = patience
+	compactionHeuristic = true
+	tool = nvimdiff
+[difftool "nvimdiff"]
+	cmd = nvim -d \"$LOCAL\" \"$REMOTE\" -c \"wincmd w\" -c \"wincmd L\"
+[merge]
+	tool = nvimdiff4
+	prompt = false
+[mergetool "nvimdiff4"]
+	cmd = nvim -d $LOCAL $BASE $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J' -c 'set diffopt&' -c 'set diffopt+=algorithm:patience'
+	keepBackup = false
+[alias]
+    orig = remote get-url --all origin
+	lg = log --graph --pretty=oneline --abbrev-commit
+	lgp = log --oneline --decorate --all --graph
+	lgm = log --pretty=format:'• %C(bold yellow)%h%C(reset) %C(red)%an%C(reset) %C(blue)%ai%C(reset) %C(bold red)%D%C(reset) | %s'
