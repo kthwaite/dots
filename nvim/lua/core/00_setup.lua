@@ -33,7 +33,7 @@ vim.opt.titlestring = "%t" -- ibid
 -- current directory is always window-local
 au("BufEnter", "*", function(ev)
 	local buf = vim.bo[ev.buf]
-	if buf.buftype ~= "terminal" and vim.tbl_contains(ignore_filetypes, buf.filetype) then
+	if buf.buftype ~= "terminal" and not vim.tbl_contains(ignore_filetypes, buf.filetype) then
 		vim.cmd("lcd %:p:h")
 	end
 end)
