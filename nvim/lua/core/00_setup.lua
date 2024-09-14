@@ -40,6 +40,7 @@ end)
 
 -- ==== Search ==================================================================
 vim.opt.incsearch = true -- show matches while you type
+vim.opt.inccommand = "split" -- split window for search
 vim.opt.hlsearch = true -- highlight matches
 vim.opt.ignorecase = true -- search case insensitive
 vim.opt.smartcase = true -- search case-sensitive when uppercase characters appear in search
