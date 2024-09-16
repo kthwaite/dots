@@ -226,3 +226,12 @@ alias what-javas='/usr/libexec/java_home -V'
 
 # -- node
 export NEXT_TELEMETRY_DISABLED=1
+
+
+# -- rsync
+alias rarm='rsync -ah --progress --remove-source-files'
+alias rapp='rsync -ah --progress --partial'
+
+# -- nvim
+# nvim without ShaDa
+alias novim='nvim -i NONE'
