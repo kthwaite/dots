@@ -1,7 +1,19 @@
-[tool.ruff.lint]
+[lint]
 select = ["I"]
+ignore = [
+    "D200", # one-line docstring should fit on one line
+    "D205", # 1 blank line required between summary line and description
+    "D202", # no blank lines after docstring
+    "D102", # missing docstring in public method
+    "D105", # missing docstring in magic method
+    "D107", # missing docstring in __init__
+    "D103", # missing docstring in public function
+]
 
-[tool.ruff.format]
+[lint.pydocstyle]
+convention = "google"
+
+[format]
 # Like Black, use double quotes for strings.
 quote-style = "double"
 
@@ -27,3 +39,4 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
