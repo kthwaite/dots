@@ -46,8 +46,10 @@ if [[ -x "$(command -v nvim)" ]]; then
     export EDITOR='nvim'
     alias vi='nvim'
     alias vim='nvim'
+    alias v='nvim'
 else
     export EDITOR='vim'
+    alias v='vim'
 fi
 
 export VISUAL=$EDITOR
