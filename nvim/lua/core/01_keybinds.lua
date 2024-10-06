@@ -23,8 +23,9 @@ local format_patterns = {
 }
 -- autoformat buffer on write
 local fmt_group = vim.api.nvim_create_augroup("kt_fmt", { clear = true })
-au("BufWritePre", table.concat(format_patterns, ","), function()
-	vim.lsp.buf.format({ async = true })
+au("BufWritePre", table.concat(format_patterns, ","), function(args)
+	-- vim.lsp.buf.format({ async = true })
+	-- require("conform").format({ bufnr = args.buf })
 end, { group = fmt_group })
 
 -- highlight text on yank

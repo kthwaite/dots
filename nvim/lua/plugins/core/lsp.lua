@@ -107,7 +107,6 @@ return {
 				},
 			},
 			"williamboman/mason-lspconfig.nvim",
-			"nvimtools/none-ls.nvim",
 		},
 		config = function()
 			local mason_lspconfig = require("mason-lspconfig")
@@ -138,13 +137,6 @@ return {
 					},
 					signs = false, -- rely on highlight styles instead, don't want to clobber signcolumn
 				})
-			local null_ls = require("null-ls")
-			null_ls.setup({
-				sources = {
-					null_ls.builtins.formatting.stylua,
-					null_ls.builtins.formatting.prettier,
-				},
-			})
 		end,
 	},
 	{
