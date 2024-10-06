@@ -20,27 +20,41 @@ snippet clai
 snippet log
 	import logging
 
-	logger = logging.getLogger(__name__)
+	log = logging.getLogger(__name__)
 # basicConfig
-snippet logb
+snippet log_basic
 	logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s [%(levelname)s] - %(message)s")
+
+snippet log_verbosity_get
+	def get_logging_verbosity(verbosity: int = 0) -> int:
+		"""Map an int into the range [0, 2] to a log level of increasing detail.
+		"""
+		return {
+			0: logging.ERROR,
+			1: logging.WARNING,
+			2: logging.INFO,
+			3: logging.DEBUG,
+		}.get(verbosity, logging.DEBUG)
 
 
 ## Library-specific
 # pydantic
-snippet pyd
+snippet basemodel
 	class ${1:class_name}(BaseModel):
 		${0}
 
 # typer
-snippet typ
+snippet typer
 	import typer
 
 	app = typer.Typer(no_args_is_help=True)
 
-	@app.command('${1:command_name}')
-	def main():
-		${0}
-
 	if __name__ == "__main__":
 		app()
+
+
+snippet typer_cmd
+	@app.command("${1:command_name}")
+	def cmd_${2}():
+		${0}
+
