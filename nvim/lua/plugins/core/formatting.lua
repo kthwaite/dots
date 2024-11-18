@@ -16,8 +16,8 @@ return {
 				python = { "ruff_format" },
 				rust = { "rustfmt", lsp_format = "fallback" },
 				sql = { "sql_format" },
-				typescript = { "prettierd", "prettier", stop_after_first = true },
-				typescriptreact = { "prettierd", "prettier", stop_after_first = true },
+				typescript = { "biome", "prettierd", "prettier", stop_after_first = true },
+				typescriptreact = { "biome", "prettierd", "prettier", stop_after_first = true },
 				zsh = { "shfmt" },
 			},
 			format_on_save = {

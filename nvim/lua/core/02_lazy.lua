@@ -85,6 +85,20 @@ M.spec = build_spec(M.extra_plugins, M.session_plugins)
 
 require("lazy").setup({
 	spec = M.spec,
+	pkg = {
+		enabled = true,
+		cache = vim.fn.stdpath("state") .. "/lazy/pkg-cache.lua",
+		-- the first package source that is found for a plugin will be used.
+		sources = {
+			"lazy",
+			"rockspec", -- will only be used when rocks.enabled is true
+			"packspec",
+		},
+	},
+	rocks = {
+		enabled = true,
+		hererocks = true,
+	},
 })
 
 return M

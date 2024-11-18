@@ -47,7 +47,7 @@ local ls_opts = {
 		opts.filetypes = { "sh", "bash", "zsh" }
 	end,
 	["tsserver"] = function(opts)
-		opts.cmd = { "yarn", "typescript-language-server", "--stdio" }
+		opts.cmd = { "pnpm", "typescript-language-server", "--stdio" }
 	end,
 	["eslintls"] = function(opts)
 		opts.settings = {
