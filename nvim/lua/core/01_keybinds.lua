@@ -24,8 +24,8 @@ local format_patterns = {
 -- autoformat buffer on write
 local fmt_group = vim.api.nvim_create_augroup("kt_fmt", { clear = true })
 au("BufWritePre", table.concat(format_patterns, ","), function(args)
-	-- vim.lsp.buf.format({ async = true })
-	-- require("conform").format({ bufnr = args.buf })
+	--vim.lsp.buf.format({ async = true })
+	require("conform").format({ bufnr = args.buf })
 end, { group = fmt_group })
 
 -- highlight text on yank
@@ -42,6 +42,12 @@ n("<leader>st", function()
 	vim.wo.winfixheight = true
 	vim.cmd.term()
 end, { desc = "Open a terminal at the bottom of the screen." })
+
+-- # split navigation
+n("<leader>sl", "<C-w>l", { desc = "Move to the left split." })
+n("<leader>sh", "<C-w>r", { desc = "Move to the right split." })
+n("<leader>sj", "<C-w>j", { desc = "Move to the bottom split." })
+n("<leader>sk", "<C-w>k", { desc = "Move to the top split." })
 
 -- ## Plugins ##
 -- # lazy

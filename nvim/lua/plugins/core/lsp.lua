@@ -2,11 +2,11 @@ local nnoremap = require("core.utility").nnoremap
 
 ---Use an on_attach function to only map the following keys
 ---after the language server attaches to the current buffer
----@param client # client, unused here
+---@param _ # client, unused here
 ---@param bufnr number
 local on_attach = function(_, bufnr)
 	-- Enable completion triggered by <c-x><c-o>
-	vim.api.nvim_buf_set_option(bufnr, "omnifunc", "v:lua.vim.lsp.omnifunc")
+	vim.api.nvim_set_option_value("omnifunc", "v:lua.vim.lsp.omnifunc", { buf = bufnr })
 
 	-- Mappings
 	local function n(key, func, desc)
