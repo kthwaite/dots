@@ -14,7 +14,19 @@ function vvv() {
             else
                 python3 -m venv .venv --prompt $venv_prompt --upgrade-deps $@
             fi
+
+            if [[ -x "$(command -v mise)" ]]; then
+                if [[ ! -f mise.toml ]] && [[ ! -f .mise.toml ]]; then
+                    echo "Creating mise.toml file..."
+                    cat > mise.toml << EOF
+[env]
+_.python.venv = ".venv"
+EOF
+                fi
+            fi
         fi
-        source .venv/bin/activate
+        if [[ -x "$(command -v mise)" ]]; then
+            source .venv/bin/activate
+            fi
     fi
 }
