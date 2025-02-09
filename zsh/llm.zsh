@@ -116,3 +116,65 @@ Diff to summarise: $staged_diff"
     # Output the suggested commit title
     echo "$title"
 }
+
+
+files-to-tokens() {
+  # Colors
+  local color_reset="$(tput sgr0)"
+  local color_red="$(tput setaf 1)"
+  local color_green="$(tput setaf 2)"
+
+  local window=""          # Will hold the window value if provided
+  local args=()            # Accumulate other arguments to pass to files-to-prompt
+
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -w|--window)
+        window="$2"
+        shift 2
+        ;;
+      *)
+        # All other args accumulate
+        args+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  # Run files-to-prompt with the gathered arguments, and pipe to ttok
+  local token_count
+  token_count="$(files-to-prompt "${args[@]}" | ttok)"
+
+  # If we didn't get a numeric value for some reason, just echo and return
+  if ! [[ "$token_count" =~ ^[0-9]+$ ]]; then
+    echo "Error: ttok did not output an integer." >&2
+    echo "$token_count"
+    return 1
+  fi
+
+  # If a window is specified, compare and colorize
+  if [[ -n "$window" ]]; then
+    # Avoid division by zero
+    if [[ "$window" -eq 0 ]]; then
+      echo "Error: --window cannot be zero." >&2
+      return 1
+    fi
+
+    # Compute percentage
+    local percentage
+    percentage=$(awk -v tc="$token_count" -v w="$window" \
+      'BEGIN { printf "%.2f", (tc / w) * 100 }')
+
+    if (( token_count < window )); then
+      # Green if within window
+      echo -e "${color_green}${token_count}/${window} (${percentage}%)${color_reset}"
+    else
+      # Red if over/at window
+      echo -e "${color_red}${token_count}/${window} (${percentage}%)${color_reset}"
+    fi
+  else
+    # No window - just print the token count
+    echo "$token_count"
+  fi
+}
