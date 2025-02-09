@@ -12,8 +12,20 @@ This function inspects the current directory and:
   • Verifies that you are inside a Git repository.
   • Checks that there are staged changes (i.e. a non-empty git diff --cached).
   • Ensures that the required executables 'jq' and 'llm' are available.
-  • Uses 'llm' to summarise the staged changes and suggest a commit title.
-  
+  • Uses 'llm' to summarise the staged changes and suggest a commit title that follows a specific commit style.
+
+Commit Style:
+  The commit message should be formatted as:
+      <hash> <type>(<domain>): <description>
+  where:
+      - <type> is typically one of: feat, fix, chore, docs, refactor, etc.
+      - <domain> is determined by the subdirectory where the changes occurred (e.g., zsh, nvim, mise, ruff, wezterm, zellij, etc.).
+  For example:
+      af3f751 feat(zsh): Add function to suggest commit titles using llm-cli
+      dc919dc feat(zsh): Add clone_subdir function for cloning specific subdirectories
+      d258687 feat(zsh): Check for mise in vvv
+      f966d16 feat(git): Add pull, branch-sort defaults
+
 Options:
   -m MODEL    Use a custom model instead of the default ("o1-mini").
   -h, --help  Show this help message and exit.
@@ -68,9 +80,17 @@ EOF
     local staged_diff
     staged_diff=$(git diff --cached)
 
-    # Build the prompt text for the LLM
+    # Build the prompt text for the LLM with updated commit style instructions
     local prompt
-    prompt="Summarise the following git diff. Based on the summary, suggest a short title for the git commit message. Answer in valid JSON (no backticks), using the following schema: {\"summary\": string, \"title\": string} $staged_diff"
+    prompt="Summarise the following git diff. Based on your summary, suggest a short title for the git commit message that adheres to this commit style:
+<hash> <type>(<domain>): <description>
+where <type> is one of (feat, fix, chore, docs, refactor, etc.) and <domain> is determined by the subdirectory where the changes occurred (for example, zsh, nvim, mise, ruff, wezterm, zellij). For example:
+  af3f751 feat(zsh): Add function to suggest commit titles using llm-cli
+  dc919dc feat(zsh): Add clone_subdir function for cloning specific subdirectories
+  d258687 feat(zsh): Check for mise in vvv
+  f966d16 feat(git): Add pull, branch-sort defaults
+Your answer should be in valid JSON (without backticks), using the following schema: {\"summary\": string, \"title\": string}.
+Diff to summarise: $staged_diff"
 
     # Run the llm command with the chosen model and parse the output with jq
     local llm_output
