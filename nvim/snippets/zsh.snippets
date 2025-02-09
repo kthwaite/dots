@@ -1,0 +1,22 @@
+snippet alias_cond "Conditional alias based on command"
+	if [[ -x "$(command -v ${1:command})" ]]; then
+		alias ${2:alias_name}='${1:command}'
+	fi
+
+snippet func_help "Function with help option"
+	${1:function_name}() {
+		if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+			cat <<'EOF'
+	Usage: ${1} [OPTIONS] ${2:arguments}
+
+	Description of the function.
+
+	Options:
+	  -h, --help    Show this help message and exit
+	EOF
+			return 0
+		fi
+
+		# Function implementation
+		${0:// function body}
+	}
