@@ -1,5 +1,5 @@
 # Suggest a commit title using llm.
-suggest_commit() {
+suggest-commit() {
     # Default model
     local model="o1-mini"
 
@@ -21,10 +21,10 @@ Commit Style:
       - <type> is typically one of: feat, fix, chore, docs, refactor, etc.
       - <domain> is determined by the subdirectory where the changes occurred (e.g., zsh, nvim, mise, ruff, wezterm, zellij, etc.).
   For example:
-      af3f751 feat(zsh): Add function to suggest commit titles using llm-cli
-      dc919dc feat(zsh): Add clone_subdir function for cloning specific subdirectories
-      d258687 feat(zsh): Check for mise in vvv
-      f966d16 feat(git): Add pull, branch-sort defaults
+      feat(zsh): Add function to suggest commit titles using llm-cli
+      feat(zsh): Add clone_subdir function for cloning specific subdirectories
+      feat(zsh): Check for mise in vvv
+      feat(git): Add pull, branch-sort defaults
 
 Options:
   -m MODEL    Use a custom model instead of the default ("o1-mini").
@@ -85,10 +85,10 @@ EOF
     prompt="Summarise the following git diff. Based on your summary, suggest a short title for the git commit message that adheres to this commit style:
 <hash> <type>(<domain>): <description>
 where <type> is one of (feat, fix, chore, docs, refactor, etc.) and <domain> is determined by the subdirectory where the changes occurred (for example, zsh, nvim, mise, ruff, wezterm, zellij). For example:
-  af3f751 feat(zsh): Add function to suggest commit titles using llm-cli
-  dc919dc feat(zsh): Add clone_subdir function for cloning specific subdirectories
-  d258687 feat(zsh): Check for mise in vvv
-  f966d16 feat(git): Add pull, branch-sort defaults
+  feat(zsh): Add function to suggest commit titles using llm-cli
+  feat(zsh): Add clone_subdir function for cloning specific subdirectories
+  feat(zsh): Check for mise in vvv
+  feat(git): Add pull, branch-sort defaults
 Your answer should be in valid JSON (without backticks), using the following schema: {\"summary\": string, \"title\": string}.
 Diff to summarise: $staged_diff"
 
@@ -102,6 +102,8 @@ Diff to summarise: $staged_diff"
     local title
     if ! title=$(echo "$llm_output" | jq -r '.title' 2>/dev/null); then
         echo "Error: Failed to parse llm output." >&2
+        echo "llm output:" >&2
+        echo "$llm_output" >&2
         return 1
     fi
 
