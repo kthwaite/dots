@@ -22,7 +22,7 @@ Which creates:
 Options:
   -h, --help    Show this help text and exit
 EOF
-        return 0
+  return 0
     fi
 
     # Process each module argument
@@ -61,13 +61,7 @@ EOF
     done
 }
 
-# Check whether 'pt' is already declared as an alias or command
-if ! type pt >/dev/null 2>&1; then
-    alias pt=pytouch
-    # echo "Alias 'pt' created for pytouch"
-else
-    # echo "Warning: 'pt' is already declared as a command or alias. Skipping alias creation."
-fi
+alias pt=pytouch
 
 # -- local dir venv
 function vvv() {
@@ -98,6 +92,45 @@ EOF
         fi
         if [[ -x "$(command -v mise)" ]]; then
             source .venv/bin/activate
-            fi
+        fi
     fi
 }
+
+
+# Check current directory for a .venv and pyproject.toml.
+#  - If found, deactivate any active venv (if different) and activate the local one.
+#  - If not found and a venv is active, deactivate it.
+function auto_activate_venv() {
+    local target_venv="$PWD/.venv"
+    if [ -d ".venv" ] && [ -f "pyproject.toml" ]; then
+        if [[ "$VIRTUAL_ENV" != "$target_venv" ]]; then
+
+            if [[ -n "$VIRTUAL_ENV" ]]; then
+                # Deactivating previously active venv
+                if type deactivate &>/dev/null; then
+                    deactivate
+                else
+                    echo "Warning: 'deactivate' function not found."
+                fi
+            fi
+            # Activating venv from $target_venv
+            source "$target_venv/bin/activate"
+        fi
+    else
+        # Case 2: No local venv; if one is active, then deactivate.
+        if [[ -n "$VIRTUAL_ENV" ]]; then
+            # No local venv found; deactivating active venv
+            if type deactivate &>/dev/null; then
+                deactivate
+            else
+                echo "Warning: 'deactivate' function not found."
+            fi
+        fi
+    fi
+}
+
+# Hook to run auto_activate_venv when changing directory
+autoload -Uz add-zsh-hook
+add-zsh-hook chpwd auto_activate_venv
+# Run auto_activate_venv on startup
+auto_activate_venv
