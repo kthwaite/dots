@@ -92,6 +92,19 @@ where <type> is one of (feat, fix, chore, docs, refactor, etc.) and <domain> is 
 Your answer should be in valid JSON (without backticks), using the following schema: {\"summary\": string, \"title\": string}.
 Diff to summarise: $staged_diff"
 
+    # Get token count
+    local token_count
+    token_count=$(echo "$prompt" | ttok)
+
+    if [[ "$token_count" -gt 32000 ]]; then
+        read -r -p "Token count exceeds 32000. Continue? [y/N]: " response
+        response=${response:-N}
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "Commit cancelled due to high token count."
+            return 1
+        fi
+    fi
+
     # Run the llm command with the chosen model and parse the output with jq
     local llm_output
     if ! llm_output=$(llm -m "$model" "$prompt" 2>/dev/null); then

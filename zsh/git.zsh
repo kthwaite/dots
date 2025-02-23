@@ -4,7 +4,7 @@ function whatchanged() {
         echo 'Usage: whatchanged [SINCE_DATE]'
         return
     fi
-    git whatchanged --since=$1 --numstat --oneline
+    git log --since=$1 --pretty=tformat: --numstat | awk '{added+=$1; removed+=$2} END {print "Added:", added, "Removed:", removed, "Total:", added + removed}'
 }
 
 # clone a subdirectory from a Git repository
