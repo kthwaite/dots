@@ -8,14 +8,14 @@ local noremap = util.noremap
 local au = util.au
 
 -- ==== Setup ===================================================================
-vim.g.loaded_ruby_provider = 0
-vim.g.loaded_node_provider = 0
-vim.g.loaded_perl_provider = 0
-vim.g.have_nerd_font = true
-vim.g.mapleader = " "
-vim.g.localleader = " "
-vim.opt.shell = "zsh -l"
-vim.opt.termguicolors = true
+vim.g.loaded_ruby_provider = 0 -- disable ruby provider
+vim.g.loaded_node_provider = 0 -- disable node provider
+vim.g.loaded_perl_provider = 0 -- disable perl provider
+vim.g.have_nerd_font = true -- enable nerd font by default
+vim.g.mapleader = " " -- map leader to space
+vim.g.localleader = " " -- map localleader to space
+vim.opt.shell = "zsh -l" -- use zsh as default shell
+vim.opt.termguicolors = true -- enable true color
 vim.opt.encoding = "utf-8" -- default encoding is utf-8
 vim.opt.fileformats = "unix,dos,mac" -- prefer Unix over Windows over OS 9 formats
 vim.opt.history = 1000 -- 1000 lines of history
@@ -32,12 +32,14 @@ vim.opt.lazyredraw = false -- faster macro invocation
 vim.opt.title = true -- set window title
 vim.opt.titlestring = "%t" -- ibid
 -- current directory is always window-local
+--[[
 au("BufEnter", "*", function(ev)
 	local buf = vim.bo[ev.buf]
 	if buf.buftype ~= "terminal" and not vim.tbl_contains(ignore_filetypes, buf.filetype) then
 		vim.cmd("lcd %:p:h")
 	end
 end)
+]]
 
 -- ==== Search ==================================================================
 vim.opt.incsearch = true -- show matches while you type
@@ -102,3 +104,47 @@ noremap("<C-l>", "<C-w>l", { desc = "Move to right split." })
 nnoremap("<leader>hv", "<C-w>t<C-w>H", { desc = "Horizontal split to vertical split." })
 -- vertical split to horizontal split
 nnoremap("<leader>vh", "<C-w>t<C-w>K", { desc = "Vertical split to horizontal split." })
+
+-- ==== LSP ====================================================================
+-- # diagnostics
+vim.diagnostic.config({
+	virtual_text = {
+		prefix = "●", -- Character to show before the diagnostic message
+		spacing = 5, -- Add some space
+		source = "if_many", -- Show a prefix like "eslint" only if there are multiple sources
+		format = function(diagnostic)
+			-- Custom function to format the diagnostic message
+			return string.format("[%s] %s: %s", diagnostic.source, diagnostic.severity, diagnostic.message)
+		end,
+	},
+	-- rely on highlight styles instead, don't want to clobber signcolumn
+	signs = false,
+	-- General options
+	update_in_insert = true,
+	severity_sort = true,
+	float = {
+		border = "rounded", -- Border style for floating window
+		source = "if_many", -- Show diagnostic source only if there are multiple sources
+		header = "",
+		prefix = "",
+	},
+})
+vim.api.nvim_create_user_command("LspStatus", function()
+	local clients = vim.lsp.get_clients()
+	if #clients == 0 then
+		vim.notify("No LSP clients running", vim.log.levels.WARN)
+		return
+	end
+
+	-- Display all active clients
+	local lines = { "Active Language Servers:" }
+	for _, client in pairs(clients) do
+		local line = "- " .. client.name
+		if client.name ~= client.id then
+			line = line .. string.format(" (id: %d)", client.id)
+		end
+		table.insert(lines, line)
+	end
+
+	vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
+end, {})

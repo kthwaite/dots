@@ -28,11 +28,33 @@ local dap_setup = {
 			},
 		}
 	end,
+	["typescriptreact"] = function(mason_registry, dap)
+		dap.adapters.typescriptreact = {
+			type = "server",
+			host = "::1",
+			port = "${port}",
+			executable = {
+				command = "js-debug-adapter",
+				args = {
+					"${port}",
+				},
+			},
+		}
+		dap.configurations.typescriptreact = {
+			{
+				type = "pwa-node",
+				request = "launch",
+				name = "Launch file",
+				program = "${file}",
+				cwd = "${workspaceFolder}",
+			},
+		}
+	end,
 }
 return {
 	{
 		"rcarriga/nvim-dap-ui",
-		dependencies = { "mfussenegger/nvim-dap", "williamboman/mason.nvim" },
+		dependencies = { "mfussenegger/nvim-dap", "williamboman/mason.nvim", "nvim-neotest/nvim-nio" },
 		lazy = true,
 		config = function()
 			local dap = require("dap")

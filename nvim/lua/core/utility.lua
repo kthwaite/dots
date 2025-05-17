@@ -38,6 +38,10 @@ M.inoremap = function(capt, repl, opts)
 	vim.keymap.set("i", capt, repl, opts)
 end
 
+---Convenience function to create a normal mode keymap
+---@param capt string # keymap capture
+---@param repl string|function # keymap replacement
+---@param opts? table # options passed to nvim_set_keymap
 M.noremap = function(capt, repl, opts)
 	opts = opts or {}
 	opts["noremap"] = true

@@ -1,11 +1,14 @@
 return {
-	--------------------------------------------------------------------------------
-	-- # colorschemes
 	{
+		-- Monokai
 		"tanvirtin/monokai.nvim",
+		--- Set colorscheme on startup
 		opts = function()
 			vim.cmd.colorscheme("monokai")
 		end,
 	},
-	{ "rebelot/kanagawa.nvim" },
+	{
+		-- Kanagawa
+		"rebelot/kanagawa.nvim",
+	},
 }

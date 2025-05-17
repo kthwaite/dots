@@ -23,6 +23,11 @@ return {
 		event = "InsertEnter",
 		config = function()
 			local cmp = require("cmp")
+			vim.lsp.config("*", {
+				capabilities = require("cmp_nvim_lsp").default_capabilities(
+					vim.lsp.protocol.make_client_capabilities()
+				),
+			})
 			cmp.setup({
 				snippet = {
 					expand = function(args)
