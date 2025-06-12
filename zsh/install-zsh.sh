@@ -19,16 +19,26 @@ DOTS_DIR="${SCRIPT_DIR:h}"
 # Module descriptions
 typeset -A module_descriptions
 module_descriptions=(
+    # Development
     "python"     "Python development utilities (pytouch, vvv, auto_activate_venv)"
     "git"        "Git helper functions (whatchanged, clone_subdir)"
     "llm"        "LLM integration utilities (suggest-commit, files-to-tokens)"
+    # System
+    "arch"       "Arch Linux package management and system utilities"
+    "deb"        "Debian/Ubuntu package management utilities"
     "brew"       "Homebrew helpers (brew-list-installed)"
-    "evalcache"  "Shell initialization caching"
+    # Power User
+    "nav"        "Enhanced directory navigation (bookmarks, zoxide, project jumping)"
+    "file"       "File manipulation shortcuts (batch ops, archiving, search)"
+    "process"    "Process management (port utils, monitoring, notifications)"
+    "ssh"        "SSH utilities (key management, tunnels, multiplexing)"
+    "docker"     "Docker shortcuts and management utilities"
+    "net"        "Network utilities (IP/DNS, HTTP, SSL, speed tests)"
+    # Utilities
+    "evalcache"  "Shell initialization caching for faster startup"
     "whoa"       "Git safety wrapper (warns on 'git add .')"
-    "arch"       "Arch Linux specific utilities"
+    "ffmpeg"     "FFmpeg media manipulation helpers"
     "cmus"       "cmus music player helpers"
-    "deb"        "Debian/Ubuntu specific utilities"
-    "ffmpeg"     "FFmpeg helper functions"
     "v"          "V language utilities"
 )
 
@@ -36,7 +46,7 @@ module_descriptions=(
 core_modules=("00_prelude" "02_completion")
 
 # Available optional modules (without .zsh extension)
-optional_modules=("python" "git" "llm" "brew" "evalcache" "whoa" "arch" "cmus" "deb" "ffmpeg" "v")
+optional_modules=("python" "git" "llm" "nav" "file" "process" "ssh" "docker" "net" "arch" "deb" "brew" "evalcache" "whoa" "ffmpeg" "cmus" "v")
 
 # Function to backup existing .zshrc
 backup_zshrc() {
