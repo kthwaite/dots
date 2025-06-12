@@ -1,7 +1,7 @@
 # Suggest a commit title using llm.
 suggest-commit() {
     # Default model
-    local model="o1-mini"
+    local model="openrouter/openai/o1-mini"
 
     # Print help text if -h or --help is passed
     if [[ "$1" == "-h" || "$1" == "--help" ]]; then
