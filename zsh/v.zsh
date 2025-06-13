@@ -131,4 +131,84 @@ function v_install_completion {
     compctl -K _v_virtualenv_list v
 }
 
+# Create virtualenv with specific Python version (uv only)
+function v_virtualenv_python {
+    if [[ $# -ne 2 ]]; then
+        echo "Usage: v -p <python_version> <env_name>"
+        echo "Example: v -p 3.11 myenv"
+        return 1
+    fi
+    
+    if [[ ! -x "$(command -v uv)" ]]; then
+        echo "This feature requires uv. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"
+        return 1
+    fi
+    
+    local py_version="$1"
+    local env_name="$2"
+    local env_dir="$V_VIRTUALENV_HOME/$env_name"
+    
+    if [ -e "$env_dir" ]; then
+        echo "Virtual environment already exists: '$env_name'"
+        return 127
+    fi
+    
+    echo "Creating virtual environment '$env_name' with Python $py_version..."
+    uv venv "$env_dir" --python "$py_version" --prompt "$env_name"
+}
+
+# Install packages in current virtual environment
+function v_virtualenv_install {
+    if [[ -z $VIRTUAL_ENV ]]; then
+        echo "No virtual environment is active"
+        return 1
+    fi
+    
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: v -i <package> [package...]"
+        return 1
+    fi
+    
+    if [[ -x "$(command -v uv)" ]]; then
+        uv pip install "$@"
+    else
+        pip install "$@"
+    fi
+}
+
+# Enhanced virtualenv listing with Python versions and package counts
+function v_virtualenv_list_detailed {
+    echo "Virtual Environments in $V_VIRTUALENV_HOME:"
+    echo "-------------------------------------------"
+    
+    for python in $(echo "${V_VIRTUALENV_HOME}"/*/bin/python | sort); do
+        if [[ -f "$python" ]]; then
+            local name=$(echo "$python" | sed -E -e "s@${V_VIRTUALENV_HOME}/(.*)/bin/python@\1@g")
+            local ver=$($python -V 2>&1 | awk '{print $2}')
+            local pkg_count=0
+            
+            if [[ -f "${V_VIRTUALENV_HOME}/${name}/bin/pip" ]]; then
+                pkg_count=$("${V_VIRTUALENV_HOME}/${name}/bin/pip" list 2>/dev/null | tail -n +3 | wc -l)
+            fi
+            
+            printf "%-20s Python %-10s %3d packages" "$name" "$ver" "$pkg_count"
+            
+            if [[ "$VIRTUAL_ENV" == "${V_VIRTUALENV_HOME}/${name}" ]]; then
+                printf " [ACTIVE]"
+            fi
+            echo
+        fi
+    done
+}
+
+# Interactive virtualenv selection with fzf
+if [[ -x "$(command -v fzf)" ]]; then
+    function vi {
+        local env=$(v_virtualenv_list_raw | fzf --preview "echo 'Python version:'; ${V_VIRTUALENV_HOME}/{}/bin/python --version 2>&1; echo; echo 'Installed packages:'; ${V_VIRTUALENV_HOME}/{}/bin/pip list 2>/dev/null | head -20")
+        if [[ -n "$env" ]]; then
+            v_virtualenv_switch "$env"
+        fi
+    }
+fi
+
 v_install_completion

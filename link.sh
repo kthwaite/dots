@@ -11,20 +11,22 @@ DRY_RUN=0
 
 ## Associative array of source -> destination pairs
 declare -A pairs=(
-    ["./nvim"]="$HOME/.config/nvim"
-    ["./wezterm"]="$HOME/.config/wezterm"
-    ["./gitconfig"]="$HOME/.gitconfig"
-    ["./ruff/ruff.toml"]="$HOME/.ruff.toml"
-    ["./zellij"]="$HOME/.config/zellij"
+    ["$PWD/nvim"]="$HOME/.config/nvim"
+    ["$PWD/wezterm"]="$HOME/.config/wezterm"
+    ["$PWD/gitconfig"]="$HOME/.gitconfig"
+    ["$PWD/ruff/ruff.toml"]="$HOME/.ruff.toml"
+    ["$PWD/zellij"]="$HOME/.config/zellij"
+    ["$PWD/tmux/tmux.conf"]="$HOME/.tmux.conf"
 )
 
 ## Associative array of names -> source pairs
 declare -A names=(
-    ["nvim"]="./nvim"
-    ["wezterm"]="./wezterm"
-    ["gitconfig"]="./gitconfig"
-    ["ruff"]="./ruff/ruff.toml"
-    ["zellij"]="./zellij"
+    ["nvim"]="$PWD/nvim"
+    ["wezterm"]="$PWD/wezterm"
+    ["gitconfig"]="$PWD/gitconfig"
+    ["ruff"]="$PWD/ruff/ruff.toml"
+    ["zellij"]="$PWD/zellij"
+    ["tmux"]="$PWD/tmux/tmux.conf"
 )
 
 function realpath_fallback() {

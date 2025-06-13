@@ -1,6 +1,7 @@
 # Suggest a commit title using llm.
 suggest-commit() {
     # Default model
+
     local model="gpt-4.1-mini"
 
     # Print help text if -h or --help is passed
