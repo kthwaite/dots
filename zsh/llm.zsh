@@ -1,7 +1,7 @@
 # Suggest a commit title using llm.
 suggest-commit() {
     # Default model
-    local model="o1-mini"
+    local model="gpt-4.1-mini"
 
     # Print help text if -h or --help is passed
     if [[ "$1" == "-h" || "$1" == "--help" ]]; then
@@ -109,6 +109,7 @@ Diff to summarise: $staged_diff"
     local llm_output
     if ! llm_output=$(llm -m "$model" "$prompt" 2>/dev/null); then
         echo "Error: Failed to execute llm." >&2
+        echo "$llm_output" >&2
         return 1
     fi
 
