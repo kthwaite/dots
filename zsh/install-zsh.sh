@@ -140,13 +140,13 @@ generate_zshrc() {
 DOTS_DIR="${HOME}/.dots"
 
 # Core modules (always loaded)
-zsh_core_modules=(
+dots_core_modules=(
     "00_prelude"
     "02_completion"
 )
 
 # Optional modules (customize this array to add/remove modules)
-zsh_modules=(
+dots_modules=(
 EOF
 
     # Add selected modules to the array
@@ -159,31 +159,31 @@ EOF
 
 # Function to load zsh modules
 load_zsh_modules() {
-    local module_path="${DOTS_DIR}/zsh"
+    local -r _module_path="${DOTS_DIR}/zsh"
     
     # Load core modules first
-    for module in ${zsh_core_modules[@]}; do
-        local file="${module_path}/${module}.zsh"
-        if [[ -f "$file" ]]; then
-            source "$file"
+    for _module in "${dots_core_modules[@]}"; do
+        local _file="${_module_path}/${_module}.zsh"
+        if [[ -f "$_file" ]]; then
+            source "$_file"
         else
-            echo "Warning: Core module not found: $file" >&2
+            echo "Warning: Core module not found: $_file" >&2
         fi
     done
     
     # Load prompt module only if starship is not available
     if ! command -v starship &>/dev/null; then
-        local prompt_file="${module_path}/01_prompt.zsh"
-        if [[ -f "$prompt_file" ]]; then
-            source "$prompt_file"
+        local _prompt_file="${_module_path}/01_prompt.zsh"
+        if [[ -f "$_prompt_file" ]]; then
+            source "$_prompt_file"
         fi
     fi
     
     # Load optional modules
-    for module in ${zsh_modules[@]}; do
-        local file="${module_path}/${module}.zsh"
-        if [[ -f "$file" ]]; then
-            source "$file"
+    for _module in "${dots_modules[@]}"; do
+        local file="${_module_path}/${_module}.zsh"
+        if [[ -f "$_file" ]]; then
+            source "$_file"
         else
             echo "Warning: Module not found: $file" >&2
         fi
@@ -199,7 +199,7 @@ if command -v starship &>/dev/null; then
     eval "$(starship init zsh)"
 fi
 
-# User customizations can go below this line
+# User customizations below this line
 # ----------------------------------------
 
 EOF

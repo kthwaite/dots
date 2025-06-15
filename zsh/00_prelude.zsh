@@ -237,3 +237,20 @@ alias rapp='rsync -ah --progress --partial'
 # -- nvim
 # nvim without ShaDa
 alias novim='nvim -i NONE'
+
+# -- zsh utilities
+alias zsh-reload='exec zsh'
+alias zsh-config='${EDITOR:-vim} ~/.zshrc'
+alias zsh-edit='${EDITOR:-vim} ~/.dots/zsh/'
+
+# Quick command to show all custom functions
+show_functions() {
+    echo "=== Custom Functions ==="
+    declare -f | grep -E '^[a-zA-Z_][a-zA-Z0-9_]* \(\)' | sed 's/ ()//' | sort
+}
+
+# Show all aliases
+show_aliases() {
+    echo "=== Custom Aliases ==="
+    alias | sort
+}
