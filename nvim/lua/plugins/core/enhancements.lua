@@ -3,10 +3,7 @@ return {
 		"folke/which-key.nvim",
 		event = "VeryLazy",
 		opts = {
-			---@alias wk.Mapping table<string, fun(opts?: table)|string|wk.Mapping|wk.Node[]>
-			---@alias wk.Node table<string, fun(opts?: table)|string|wk.Mapping|wk.Node[]>
-			---@param mapping wk.Mapping
-			filter = function(mapping)
+			filter = function()
 				-- example to exclude mappings without a description
 				-- return mapping.desc and mapping.desc ~= ""
 				return true
@@ -52,15 +49,19 @@ return {
 			},
 		},
 	},
-
-	-- surround-marks made simple
 	{
-		"tpope/vim-surround",
+		dir = vim.fn.stdpath("config") .. "/plugins/surround",
+		lazy = true,
 		event = "InsertEnter",
+		opts = {
+			mappings = true, -- Enable default mappings
+			insert_mappings = true, -- Enable insert mode mappings
+		},
 	},
 	-- Neovim setup for init.lua and plugin development with full signature help, docs and completion for the nvim lua API.
 	{
-		"folke/neodev.nvim",
+		"folke/lazydev.nvim",
+		ft = "lua", -- only load on lua files
 		opts = {},
 	},
 	-- register peeking

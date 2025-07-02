@@ -1,3 +1,3 @@
 return {
-	cmd = { "bun", "--bunx", "typescript-language-server", "--stdio" },
+	cmd = { "bunx", "--bun", "typescript-language-server", "--stdio" },
 }

@@ -28,7 +28,7 @@ local insert_package_json = function(root_files, field, fname)
 	return root_markers_with_field(root_files, { "package.json", "package.json5" }, field, fname)
 end
 return {
-	cmd = { "bun", "--bunx", "biome", "lsp-proxy" },
+	cmd = { "bunx", "--bun", "biome", "lsp-proxy" },
 	filetypes = {
 		"astro",
 		"css",
