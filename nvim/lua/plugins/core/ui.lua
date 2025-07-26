@@ -63,6 +63,8 @@ return {
 				icons_enabled = true,
 				disabled_filetypes = {},
 				always_divide_middle = true,
+				component_separators = { left = "", right = "" },
+				section_separators = { left = "", right = "" },
 			},
 			sections = {
 				lualine_a = { "mode" },
