@@ -14,7 +14,7 @@ return {
 				html = { "prettierd", "prettier", stop_after_first = true },
 				javascript = { "biome", "prettier", stop_after_first = true },
 				javascriptreact = { "biome", "prettier", stop_after_first = true },
-				json = { "prettierd", "prettier", stop_after_first = true },
+				json = { "biome", "prettierd", "prettier", stop_after_first = true },
 				lua = { "stylua" },
 				python = { "ruff_format" },
 				rust = { "rustfmt", lsp_format = "fallback" },
