@@ -2,6 +2,18 @@
 #[    prelude                                                                  ]
 #-------------------------------------------------------------------------------
 
+# dotfiles helper paths (needed before modules rely on DOTS_DIR)
+if [[ -z ${DOTS_DIR:-} ]]; then
+    DOTS_DIR="$HOME/.dots"
+fi
+
+_gwt_bin_dir="$DOTS_DIR/zsh/zfuncs"
+if [[ -d "$_gwt_bin_dir" ]]; then
+    if (( ! ${path[(Ie)$_gwt_bin_dir]} )); then
+        path=("$_gwt_bin_dir" $path)
+    fi
+fi
+
 # -- keybinds
 export KEYTIMEOUT=20
 # vi mode
@@ -47,10 +59,13 @@ if [[ -x "$(command -v nvim)" ]]; then
     alias vi='nvim'
     alias vim='nvim'
     alias v='nvim'
+    export MANPAGER='nvim +Man!'
 else
     export EDITOR='vim'
     alias v='vim'
+    export MANPAGER='vim +Man!'
 fi
+
 
 export VISUAL=$EDITOR
 export VISUDO=$EDITOR
