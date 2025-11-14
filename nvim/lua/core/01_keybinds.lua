@@ -50,6 +50,12 @@ n("<leader>sh", "<C-w>r", { desc = "Move to the right split." })
 n("<leader>sj", "<C-w>j", { desc = "Move to the bottom split." })
 n("<leader>sk", "<C-w>k", { desc = "Move to the top split." })
 
+-- # tabs
+n("<leader>tn", ":tabnext<CR>", { desc = "Go to next tab." })
+n("<leader>tp", ":tabprevious<CR>", { desc = "Go to previous tab." })
+n("<leader>tc", ":tabnew<CR>", { desc = "Create a new tab." })
+n("<leader>tx", ":tabclose<CR>", { desc = "Close current tab." })
+
 -- ## Plugins ##
 -- # lazy
 n("<leader>lu", ":Lazy update<CR>", { desc = "Update all plugins." })
