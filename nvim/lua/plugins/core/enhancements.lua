@@ -21,6 +21,52 @@ return {
 			},
 		},
 	},
+	{
+		"folke/snacks.nvim",
+		priority = 1000,
+		lazy = false,
+		---@type snacks.Config
+		opts = {
+			--
+		},
+		keys = {
+			{
+				"<leader>lg",
+				function()
+					require("snacks").lazygit()
+				end,
+				desc = "Lazygit",
+			},
+			{
+				"<leader>gl",
+				function()
+					require("snacks").lazygit.log()
+				end,
+				desc = "Lazygit Logs",
+			},
+			{
+				"<leader>rN",
+				function()
+					require("snacks").rename.rename_file()
+				end,
+				desc = "Fast Rename Current File",
+			},
+			{
+				"<leader>th",
+				function()
+					require("snacks").picker.colorschemes({ layout = "ivy" })
+				end,
+				desc = "Pick Color Schemes",
+			},
+			{
+				"<leader>vh",
+				function()
+					require("snacks").picker.help()
+				end,
+				desc = "Help Pages",
+			},
+		},
+	},
 	-- # neotree
 	{
 		"nvim-neo-tree/neo-tree.nvim",
@@ -64,8 +110,14 @@ return {
 		ft = "lua", -- only load on lua files
 		opts = {},
 	},
-	-- register peeking
-	"gennaro-tedesco/nvim-peekup",
+	-- register peeking (using local implementation)
+	{
+		dir = vim.fn.stdpath("config") .. "/plugins/peekup",
+		name = "peekup",
+		config = function()
+			require("peekup").setup()
+		end,
+	},
 	{
 		"numToStr/Comment.nvim",
 		opts = {
@@ -108,7 +160,11 @@ return {
 			},
 		},
 	},
-	{ "tpope/vim-repeat" },
+	-- Local repeat implementation (replaces tpope/vim-repeat)
+	{
+		dir = vim.fn.stdpath("config") .. "/plugins/repeat",
+		lazy = false, -- Load immediately as other plugins depend on it
+	},
 	{
 		"kylechui/nvim-surround",
 		config = function()
