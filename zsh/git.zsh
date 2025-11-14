@@ -37,3 +37,11 @@ clone_subdir() {
     git sparse-checkout set "$subdir"
     git checkout
 }
+
+alias gc="git clone"
+alias gs="git status"
+alias gd="git diff"
+alias ga="git add"
+alias gco="git checkout"
+alias gcb="git checkout -b"
+alias gcm="git commit -m"
