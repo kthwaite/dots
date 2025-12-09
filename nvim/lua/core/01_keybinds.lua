@@ -50,6 +50,22 @@ n("<leader>sh", "<C-w>r", { desc = "Move to the right split." })
 n("<leader>sj", "<C-w>j", { desc = "Move to the bottom split." })
 n("<leader>sk", "<C-w>k", { desc = "Move to the top split." })
 
+-- # tabs
+n("<leader>tn", ":tabnext<CR>", { desc = "Go to next tab." })
+n("<leader>tp", ":tabprevious<CR>", { desc = "Go to previous tab." })
+n("<leader>tc", ":tabnew<CR>", { desc = "Create a new tab." })
+n("<leader>tx", ":tabclose<CR>", { desc = "Close current tab." })
+
+-- terminal
+n("<leader>vt", function()
+	vim.cmd.vsplit()
+	vim.cmd.terminal()
+	vim.cmd.startinsert()
+end, { desc = "Open terminal in a vertical split" })
+
+-- close hidden buffers
+n("<leader>Bd", ":up | %bd | e#<cr>", { desc = "Close all hidden buffers." })
+
 -- ## Plugins ##
 -- # lazy
 n("<leader>lu", ":Lazy update<CR>", { desc = "Update all plugins." })
@@ -58,9 +74,6 @@ n("<leader>ls", ":Lazy sync<CR>", { desc = "Sync all plugins." })
 -- # mason
 n("<leader>mo", ":Mason<CR>", { desc = "Open Mason." })
 n("<leader>mu", ":MasonUpdate<CR>", { desc = "Update all Mason packages." })
-
--- close hidden buffers
-n("<leader>Bd", ":up | %bd | e#<cr>", { desc = "Close all hidden buffers." })
 
 -- # neotree
 -- toggle neotree

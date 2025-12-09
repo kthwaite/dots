@@ -9,24 +9,29 @@ set -o nounset
 # Dry-run mode flag
 DRY_RUN=0
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+
 ## Associative array of source -> destination pairs
 declare -A pairs=(
-    ["$PWD/nvim"]="$HOME/.config/nvim"
-    ["$PWD/wezterm"]="$HOME/.config/wezterm"
-    ["$PWD/gitconfig"]="$HOME/.gitconfig"
-    ["$PWD/ruff/ruff.toml"]="$HOME/.ruff.toml"
-    ["$PWD/zellij"]="$HOME/.config/zellij"
-    ["$PWD/tmux/tmux.conf"]="$HOME/.tmux.conf"
+    ["$SCRIPT_DIR/nvim"]="$HOME/.config/nvim"
+    ["$SCRIPT_DIR/wezterm"]="$HOME/.config/wezterm"
+    ["$SCRIPT_DIR/gitconfig"]="$HOME/.gitconfig"
+    ["$SCRIPT_DIR/ruff/ruff.toml"]="$HOME/.ruff.toml"
+    ["$SCRIPT_DIR/zellij"]="$HOME/.config/zellij"
+    ["$SCRIPT_DIR/tmux/tmux.conf"]="$HOME/.tmux.conf"
+    ["$SCRIPT_DIR/emacs"]="$HOME/.config/emacs"
 )
 
 ## Associative array of names -> source pairs
 declare -A names=(
-    ["nvim"]="$PWD/nvim"
-    ["wezterm"]="$PWD/wezterm"
-    ["gitconfig"]="$PWD/gitconfig"
-    ["ruff"]="$PWD/ruff/ruff.toml"
-    ["zellij"]="$PWD/zellij"
-    ["tmux"]="$PWD/tmux/tmux.conf"
+    ["nvim"]="$SCRIPT_DIR/nvim"
+    ["wezterm"]="$SCRIPT_DIR/wezterm"
+    ["gitconfig"]="$SCRIPT_DIR/gitconfig"
+    ["ruff"]="$SCRIPT_DIR/ruff/ruff.toml"
+    ["zellij"]="$SCRIPT_DIR/zellij"
+    ["tmux"]="$SCRIPT_DIR/tmux/tmux.conf"
+    ["emacs"]="$SCRIPT_DIR/emacs"
 )
 
 function realpath_fallback() {

@@ -1,0 +1,295 @@
+#!/usr/bin/env zsh
+# gwt — “git worktree in a multiplexer”
+#  ▸ gwt NAME                     → create/reuse worktrees/NAME
+#  ▸ gwt                          → pick an existing work-tree with fzf
+#  ▸ gwt --backend zellij         → operate on the active zellij session instead of tmux
+#  ▸ gwt --base trunk NAME        → use a custom base branch for the worktree
+#  ▸ gwt --session foo            → override the multiplexer session name (tmux only)
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: gwt [options] [NAME]
+
+Options:
+  --backend <tmux|zellij|auto>
+                         Multiplexer backend (default: auto)
+  --base <branch>        Base branch when creating a new worktree
+  --session <name>       Multiplexer session to target (tmux only)
+  --window-prefix <text> Prefix prepended to window/tab names
+  -h, --help             Show this help text
+
+Without NAME an interactive picker (fzf) is presented.
+EOF
+}
+
+resolve_default_branch() {
+  local ref
+  if ref=$(git symbolic-ref --quiet refs/remotes/origin/HEAD 2>/dev/null); then
+    echo "${ref##refs/remotes/origin/}"
+    return 0
+  fi
+
+  for candidate in main master trunk develop; do
+    if git show-ref --verify --quiet "refs/heads/$candidate" ||
+       git show-ref --verify --quiet "refs/remotes/origin/$candidate"; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  if ref=$(git symbolic-ref --quiet HEAD 2>/dev/null); then
+    echo "${ref##refs/heads/}"
+    return 0
+  fi
+
+  echo "" # caller decides whether this is fatal
+  return 1
+}
+
+resolve_backend() {
+  local choice=$1
+  case $choice in
+    tmux|zellij)
+      echo "$choice"
+      return 0
+      ;;
+    auto)
+      if [[ -n ${TMUX:-} ]]; then
+        echo tmux
+        return 0
+      fi
+      if [[ -n ${ZELLIJ:-} || -n ${ZELLIJ_SESSION_NAME:-} ]]; then
+        echo zellij
+        return 0
+      fi
+      if command -v tmux >/dev/null 2>&1; then
+        echo tmux
+        return 0
+      fi
+      if command -v zellij >/dev/null 2>&1; then
+        echo zellij
+        return 0
+      fi
+      echo "gwt: no supported backend (tmux/zellij) found" >&2
+      exit 1
+      ;;
+    *)
+      echo "gwt: unknown backend '$choice'" >&2
+      exit 1
+      ;;
+  esac
+}
+
+ensure_worktree() {
+  if [[ -d "$wtdir/.git" ]]; then
+    return 0
+  fi
+
+  if git show-ref --verify --quiet "refs/heads/$name"; then
+    git worktree add "$wtdir" "$name"
+    return $?
+  fi
+
+  if [[ -z ${base_branch:-} ]]; then
+    echo "gwt: base branch not set; aborting" >&2
+    return 1
+  fi
+
+  git worktree add -b "$name" "$wtdir" "$base_branch"
+}
+
+launch_tmux() {
+  command -v tmux >/dev/null 2>&1 || {
+    echo "gwt: tmux not found (install tmux or choose --backend zellij)" >&2
+    exit 1
+  }
+
+  if ! tmux has-session -t "$session" 2>/dev/null; then
+    tmux new-session -Ad -s "$session" -n "$window" -c "$wtdir"
+  elif ! tmux list-windows -t "$session" -F '#{window_name}' | grep -Fxq "$window"; then
+    tmux new-window -t "$session" -n "$window" -c "$wtdir"
+  fi
+
+  local target="$session:$window"
+  tmux select-window -t "$target"
+
+  if [[ -n ${TMUX:-} ]]; then
+    tmux switch-client -t "$target"
+  else
+    tmux attach -t "$session"
+  fi
+}
+
+launch_zellij() {
+  command -v zellij >/dev/null 2>&1 || {
+    echo "gwt: zellij not found (install zellij or choose --backend tmux)" >&2
+    exit 1
+  }
+
+  if [[ -z ${ZELLIJ_SESSION_NAME:-} && -z ${ZELLIJ:-} ]]; then
+    echo "gwt: zellij backend requires running inside an active zellij session" >&2
+    echo "     (attach to zellij first or run with --backend tmux)" >&2
+    exit 1
+  fi
+
+  if zellij action go-to-tab-name "$window" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  zellij action new-tab --cwd "$wtdir" --name "$window"
+  # focus the newly created tab; failures are non-fatal
+  zellij action go-to-tab-name "$window" >/dev/null 2>&1 || true
+}
+
+################################################################################
+# 0 · ensure we’re inside a Git repo and move to its root
+################################################################################
+root=$(git -C . rev-parse --show-toplevel 2>/dev/null) || {
+  echo "gwt: not inside a Git repository" >&2
+  exit 1
+}
+cd "$root"
+mkdir -p worktrees/ # folder that holds our work-trees
+
+################################################################################
+# parse CLI options
+################################################################################
+name=""
+base_override="${GWT_BASE_BRANCH-}"
+backend="${GWT_BACKEND:-auto}"
+
+repo_name=$(basename "$root")
+session="${GWT_SESSION:-${GWT_TMUX_SESSION:-${repo_name}-worktrees}}"
+window_prefix="${GWT_WINDOW_PREFIX:-${repo_name}/}"
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --base)
+      [[ $# -ge 2 ]] || { echo "gwt: --base needs a value" >&2; exit 1; }
+      base_override=$2
+      shift 2
+      ;;
+    --backend)
+      [[ $# -ge 2 ]] || { echo "gwt: --backend needs a value" >&2; exit 1; }
+      backend=$2
+      shift 2
+      ;;
+    --session)
+      [[ $# -ge 2 ]] || { echo "gwt: --session needs a value" >&2; exit 1; }
+      session=$2
+      shift 2
+      ;;
+    --window-prefix)
+      [[ $# -ge 2 ]] || { echo "gwt: --window-prefix needs a value" >&2; exit 1; }
+      window_prefix=$2
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "gwt: unknown flag $1" >&2
+      usage >&2
+      exit 1
+      ;;
+    *)
+      name=$1
+      shift
+      break
+      ;;
+  esac
+done
+
+if [[ $# -gt 0 ]]; then
+  echo "gwt: unexpected arguments: $*" >&2
+  usage >&2
+  exit 1
+fi
+
+backend=$(resolve_backend "$backend")
+
+################################################################################
+# 1 · pick/create the work-tree
+################################################################################
+wtdir=""
+if [[ -z $name ]]; then
+  # interactive *pick* via fzf
+  command -v fzf >/dev/null 2>&1 || {
+    echo "gwt: fzf not found (needed for interactive selection)" >&2
+    exit 1
+  }
+
+  selection=$(git worktree list --porcelain |
+    awk 'BEGIN { RS=""; FS="\n" }
+    {
+      path=""; branch="(detached)"; head=""
+      for (i=1; i<=NF; i++) {
+        if ($i ~ /^worktree /) {
+          path=substr($i, 10)
+        } else if ($i ~ /^branch /) {
+          branch=$i
+          sub(/^branch refs\/heads\//, "", branch)
+        } else if ($i ~ /^HEAD /) {
+          head=$i
+          sub(/^HEAD /, "", head)
+          head=substr(head, 1, 7)
+        }
+      }
+      printf "%s\t%s\t%s\n", path, branch, head
+    }' |
+    fzf \
+      --prompt='Worktree ❯ ' \
+      --exit-0 \
+      --delimiter='\t' \
+      --with-nth=2,1 \
+      --preview='git -C {1} status -sb' \
+      --preview-window='right:60%') || true
+
+  [[ -n ${selection:-} ]] || exit 0 # user pressed <Esc>
+  wtdir=${selection%%$'\t'*}
+  name=$(basename "$wtdir")
+else
+  # create/reuse worktrees/NAME
+  wtdir="$root/worktrees/$name"
+fi
+
+window_prefix=${window_prefix:-}
+window="$window_prefix$name"
+
+need_base=0
+if [[ ! -d "$wtdir/.git" ]]; then
+  need_base=1
+fi
+
+base_branch="${base_override:-}"
+if [[ $need_base -eq 1 && -z $base_branch ]]; then
+  base_branch=$(resolve_default_branch)
+  [[ -n $base_branch ]] || {
+    echo "gwt: unable to determine a base branch (use --base)" >&2
+    exit 1
+  }
+fi
+
+################################################################################
+# 3 · ensure the worktree exists before jumping into a multiplexer
+################################################################################
+ensure_worktree
+
+################################################################################
+# 4 · dispatch to the requested backend
+################################################################################
+case $backend in
+  tmux)
+    launch_tmux
+    ;;
+  zellij)
+    launch_zellij
+    ;;
+esac

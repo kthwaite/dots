@@ -148,3 +148,4 @@ alias gf='git fetch'
 alias gs='gst'  # Use our enhanced status
 alias glog='gl'
 alias gdiff='gd'
+alias gcl="git clone"
