@@ -230,6 +230,10 @@ if [[ -x "$(command -v uv)" ]]; then
     alias piu='uv pip install --upgrade'
     alias pio='uv pip list --outdated'
     alias pu='uv pip uninstall'
+    # -- uv run aliases
+    alias ur='uv run'
+    alias urn='uv run nvim'
+    alias urm='uv run -m'
 else
     alias pip='python -m pip'
     alias piu='python -m pip install --upgrade'
