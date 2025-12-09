@@ -34,7 +34,23 @@ return {
 			-- C-k: Toggle signature help (if signature.enabled = true)
 			--
 			-- See :h blink-cmp-config-keymap for defining your own keymap
-			keymap = { preset = "default" },
+			keymap = {
+				preset = "super-tab",
+				["<Tab>"] = {
+					function(cmp)
+						local copilot = require("copilot.suggestion")
+						if copilot.is_visible() then
+							copilot.accept()
+							-- IMPORTANT: don’t run blink’s fallback when we just accepted Copilot
+							return
+						end
+
+						-- otherwise, do whatever blink would normally do on <Tab>
+						return cmp.select_and_accept()
+					end,
+					"fallback",
+				},
+			},
 
 			appearance = {
 				-- 'mono' (default) for 'Nerd Font Mono' or 'normal' for 'Nerd Font'
