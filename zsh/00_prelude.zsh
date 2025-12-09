@@ -248,6 +248,11 @@ alias what-javas='/usr/libexec/java_home -V'
 # -- node
 export NEXT_TELEMETRY_DISABLED=1
 
+# -- search aliases
+if [[ -x "$(command -v fzf)" ]]; then
+    alias afz='alias | fzf'
+fi
+
 
 # -- rsync
 alias rarm='rsync -ah --progress --remove-source-files'
