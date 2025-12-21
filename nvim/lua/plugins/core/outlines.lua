@@ -6,9 +6,9 @@ return {
 		"folke/trouble.nvim",
 		dependencies = { "nvim-tree/nvim-web-devicons" },
 		opts = {},
-		cmd = { "Trouble", "TroubleToggle" },
+		cmd = { "Trouble" },
 		keys = {
-			{ "<leader>te", "<cmd>TroubleToggle<CR>" },
+			{ "<leader>te", "<cmd>Trouble diagnostics toggle<CR>" },
 		},
 	},
 	-- symbol outline
