@@ -42,7 +42,7 @@ vim.api.nvim_create_autocmd("FileType", {
 		vim.cmd.wincmd("L")
 		vim.cmd.wincmd("=")
 	end,
-	{ group = help_group },
+	group = help_group,
 })
 
 -- ## Keybinds ##
