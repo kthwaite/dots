@@ -33,6 +33,21 @@ au("TextYankPost", "*", function()
 	vim.highlight.on_yank({ higroup = "IncSearch", timeout = 350 })
 end, { group = util_group })
 
+-- vertical help
+local help_group = vim.api.nvim_create_augroup("k6e_help", { clear = true })
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = "help",
+	callback = function()
+		vim.bo.bufhidden = "unload"
+		vim.cmd.wincmd("L")
+		vim.cmd.wincmd("=")
+	end,
+	{ group = help_group },
+})
+
+-- ## Keybinds ##
+
+-- # terminal
 -- Open a terminal at the bottom of the screen with a fixed height.
 n("<leader>st", function()
 	vim.cmd.new()
@@ -41,6 +56,12 @@ n("<leader>st", function()
 	vim.wo.winfixheight = true
 	vim.cmd.term()
 end, { desc = "Open a terminal at the bottom of the screen." })
+-- terminal
+n("<leader>vt", function()
+	vim.cmd.vsplit()
+	vim.cmd.terminal()
+	vim.cmd.startinsert()
+end, { desc = "Open terminal in a vertical split" })
 
 -- # split navigation
 n("<leader>sl", "<C-w>l", { desc = "Move to the left split." })
@@ -54,17 +75,12 @@ n("<leader>tp", ":tabprevious<CR>", { desc = "Go to previous tab." })
 n("<leader>tc", ":tabnew<CR>", { desc = "Create a new tab." })
 n("<leader>tx", ":tabclose<CR>", { desc = "Close current tab." })
 
--- terminal
-n("<leader>vt", function()
-	vim.cmd.vsplit()
-	vim.cmd.terminal()
-	vim.cmd.startinsert()
-end, { desc = "Open terminal in a vertical split" })
-
+-- # buffers
 -- close hidden buffers
 n("<leader>Bd", ":up | %bd | e#<cr>", { desc = "Close all hidden buffers." })
 
 -- ## Plugins ##
+
 -- # lazy
 n("<leader>lu", ":Lazy update<CR>", { desc = "Update all plugins." })
 n("<leader>ls", ":Lazy sync<CR>", { desc = "Sync all plugins." })
@@ -84,7 +100,8 @@ n("<leader>tf", ":Telescope find_files<cr>", { desc = "Telescope find_files." })
 n("<leader>tb", ":Telescope buffers<cr>", { desc = "Telescope buffers." })
 n("<leader>tr", ":Telescope registers<cr>", { desc = "Telescope registers." })
 
---- # lsp
+-- ## LSP ##
+
 vim.api.nvim_create_autocmd("LspAttach", {
 	group = vim.api.nvim_create_augroup("k6e_lsp", {}),
 	---Set up LSP keybinds on attach
