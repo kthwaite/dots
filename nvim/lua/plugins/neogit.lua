@@ -5,7 +5,7 @@ return {
 		"NeogitOrg/neogit",
 		dependencies = {
 			"nvim-lua/plenary.nvim",
-			"nvim-telescope/telescope.nvim", -- optional dx fzf
+			"folke/snacks.nvim", -- optional dx fzf
 			"sindrets/diffview.nvim", -- optional - Diff integration
 		},
 		config = true,

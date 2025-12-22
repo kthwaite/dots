@@ -41,10 +41,14 @@ return {
 			-- local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
 		end,
 	},
+
 	{
 		"danymat/neogen",
 		config = function()
-			require("neogen").setup({ snippet_engine = "luasnip" })
+			require("neogen").setup({
+				snippet_engine = "luasnip",
+				input_after_comment = true, -- (default: true) automatic jump (with insert mode) on inserted annotation
+			})
 		end,
 		keys = {
 			{ "<leader>gn", "<cmd>Neogen<cr>", desc = "Neogen" },

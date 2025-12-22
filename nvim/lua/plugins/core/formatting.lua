@@ -2,7 +2,7 @@ return {
 	"stevearc/conform.nvim",
 	opts = {},
 	dependencies = {
-		"williamboman/mason.nvim",
+		"mason-org/mason.nvim",
 	},
 	config = function()
 		require("conform").setup({
@@ -12,7 +12,7 @@ return {
 				cpp = { "clang_format" },
 				go = { "gofmt" },
 				html = { "prettierd", "prettier", stop_after_first = true },
-				json = { "biome", "prettierd", "prettier", stop_after_first = true },
+				json = { "biome-check" },
 				lua = { "stylua" },
 				python = { "ruff_format" },
 				rust = { "rustfmt", lsp_format = "fallback" },

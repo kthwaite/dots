@@ -54,7 +54,7 @@ local dap_setup = {
 return {
 	{
 		"rcarriga/nvim-dap-ui",
-		dependencies = { "mfussenegger/nvim-dap", "williamboman/mason.nvim", "nvim-neotest/nvim-nio" },
+		dependencies = { "mfussenegger/nvim-dap", "mason-org/mason.nvim", "nvim-neotest/nvim-nio" },
 		lazy = true,
 		config = function()
 			local dap = require("dap")
