@@ -19,6 +19,7 @@ return {
 					bash = true,
 					lua = true,
 					markdown = false,
+					zsh = true,
 					sh = function()
 						if string.match(vim.fs.basename(vim.api.nvim_buf_get_name(0)), "^%.env.*") then
 							-- disable for .env files
