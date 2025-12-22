@@ -27,23 +27,125 @@ return {
 		lazy = false,
 		---@type snacks.Config
 		opts = {
-			--
+			dim = { enabled = true },
+			explorer = { enabled = true },
+			picker = { enabled = true },
+			zen = { enabled = true },
 		},
 		keys = {
+			-- pickers
 			{
-				"<leader>lg",
+				"<leader>tf",
+				function()
+					Snacks.picker.smart()
+				end,
+				desc = "Find files",
+			},
+			{
+				"<leader>,",
+				function()
+					Snacks.picker.buffers()
+				end,
+				desc = "Find buffers",
+			},
+			{
+				"<leader>/",
+				function()
+					Snacks.picker.grep()
+				end,
+				desc = "Live grep",
+			},
+			{
+				"<leader>:",
+				function()
+					Snacks.picker.command_history()
+				end,
+				desc = "Command history",
+			},
+			{
+				"<leader>n",
+				function()
+					Snacks.picker.notifications()
+				end,
+				desc = "Notification history",
+			},
+			{
+				"<leader>th",
+				function()
+					require("snacks").picker.colorschemes({ layout = "ivy" })
+				end,
+				desc = "Pick color scheme",
+			},
+			{
+				"<leader>vh",
+				function()
+					require("snacks").picker.help()
+				end,
+				desc = "Help pages",
+			},
+			{
+				"<leader>cf",
+				function()
+					Snacks.picker.files({ cwd = vim.fn.stdpath("config") })
+				end,
+				desc = "Find config file",
+			},
+			{
+				"<leader>cg",
+				function()
+					Snacks.picker.grep({ cwd = vim.fn.stdpath("config") })
+				end,
+				desc = "Grep config files",
+			},
+			{
+				"<leader>sk",
+				function()
+					Snacks.picker.keymaps()
+				end,
+				desc = "Keymaps",
+			},
+
+			-- explorer
+			{
+				"<leader>e",
+				function()
+					Snacks.explorer()
+				end,
+				desc = "File Explorer",
+			},
+			-- # git
+			-- git
+			{
+				"<leader>gb",
+				function()
+					require("snacks").git.blame_line()
+				end,
+				desc = "git blame (line)",
+			},
+			{
+				"<leader>gl",
+				function()
+					Snacks.picker.git_log()
+				end,
+				desc = "Git Log",
+			},
+			{
+				"<leader>gs",
+				function()
+					Snacks.picker.git_status()
+				end,
+				desc = "Git Status",
+			},
+
+			-- lazygit
+			{
+				"<leader>gg",
 				function()
 					require("snacks").lazygit()
 				end,
 				desc = "Lazygit",
 			},
-			{
-				"<leader>gl",
-				function()
-					require("snacks").lazygit.log()
-				end,
-				desc = "Lazygit Logs",
-			},
+			-- utility
 			{
 				"<leader>rN",
 				function()
@@ -52,50 +154,15 @@ return {
 				desc = "Fast Rename Current File",
 			},
 			{
-				"<leader>th",
+				"<leader>z",
 				function()
-					require("snacks").picker.colorschemes({ layout = "ivy" })
+					Snacks.zen()
 				end,
-				desc = "Pick Color Schemes",
-			},
-			{
-				"<leader>vh",
-				function()
-					require("snacks").picker.help()
-				end,
-				desc = "Help Pages",
+				desc = "Toggle Zen Mode",
 			},
 		},
 	},
-	-- # neotree
-	{
-		"nvim-neo-tree/neo-tree.nvim",
-		branch = "v3.x",
-		dependencies = {
-			"nvim-tree/nvim-web-devicons",
-			"MunifTanjim/nui.nvim",
-			"nvim-lua/plenary.nvim",
-		},
-		lazy = true,
-		cmd = "Neotree",
-		init = function()
-			vim.g.neo_tree_remove_legacy_commands = 1
-			if vim.fn.argc() == 1 then
-				local stat = vim.loop.fs_stat(vim.fn.argv(0))
-				if stat and stat.type == "directory" then
-					require("neo-tree")
-				end
-			end
-		end,
-		opts = {
-			filesystem = {
-				bind_to_cwd = false,
-				follow_current_file = true,
-				hijack_netrw_behavior = "open_default",
-			},
-		},
-	},
-	{
+	--[[{
 		dir = vim.fn.stdpath("config") .. "/plugins/surround",
 		lazy = true,
 		event = "InsertEnter",
@@ -104,12 +171,6 @@ return {
 			insert_mappings = true, -- Enable insert mode mappings
 		},
 	},
-	-- Neovim setup for init.lua and plugin development with full signature help, docs and completion for the nvim lua API.
-	{
-		"folke/lazydev.nvim",
-		ft = "lua", -- only load on lua files
-		opts = {},
-	},
 	-- register peeking (using local implementation)
 	{
 		dir = vim.fn.stdpath("config") .. "/plugins/peekup",
@@ -117,6 +178,18 @@ return {
 		config = function()
 			require("peekup").setup()
 		end,
+	},
+	-- Local repeat implementation (replaces tpope/vim-repeat)
+	{
+		dir = vim.fn.stdpath("config") .. "/plugins/repeat",
+		lazy = false, -- Load immediately as other plugins depend on it
+	},
+]]
+	-- Neovim setup for init.lua and plugin development with full signature help, docs and completion for the nvim lua API.
+	{
+		"folke/lazydev.nvim",
+		ft = "lua", -- only load on lua files
+		opts = {},
 	},
 	{
 		"numToStr/Comment.nvim",
@@ -159,11 +232,6 @@ return {
 				extra = true,
 			},
 		},
-	},
-	-- Local repeat implementation (replaces tpope/vim-repeat)
-	{
-		dir = vim.fn.stdpath("config") .. "/plugins/repeat",
-		lazy = false, -- Load immediately as other plugins depend on it
 	},
 	{
 		"kylechui/nvim-surround",
