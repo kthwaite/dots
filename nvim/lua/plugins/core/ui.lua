@@ -21,9 +21,6 @@ return {
 		opts = {},
 	},
 	{
-		"folke/zen-mode.nvim",
-	},
-	{
 		"folke/noice.nvim",
 		event = "VeryLazy",
 		dependencies = {
