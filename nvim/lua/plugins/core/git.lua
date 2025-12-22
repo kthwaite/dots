@@ -33,5 +33,10 @@ return {
 			"sindrets/diffview.nvim", -- optional - Diff integration
 		},
 		config = true,
+		keys = {
+			{ "<leader>gg", "<cmd>Neogit<CR>", desc = "Open Neogit UI" },
+			{ "<leader>gc", "<cmd>Neogit commit<CR>", desc = "Neogit commit" },
+			{ "<leader>gl", "<cmd>Neogit log<CR>", desc = "Neogit log" },
+		},
 	},
 }
