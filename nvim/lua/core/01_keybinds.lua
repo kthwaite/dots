@@ -99,13 +99,6 @@ n("<leader>mu", ":MasonUpdate<CR>", { desc = "Update all Mason packages." })
 -- toggle neotree
 n("<leader>ft", ":Neotree toggle<CR>", { desc = "Toggle Neotree." })
 
--- # telescope
-n("<leader>to", ":Telescope<cr>", { desc = "Open Telescope." })
-n("<leader>tg", ":Telescope live_grep<cr>", { desc = "Telescope live_grep." })
-n("<leader>tf", ":Telescope find_files<cr>", { desc = "Telescope find_files." })
-n("<leader>tb", ":Telescope buffers<cr>", { desc = "Telescope buffers." })
-n("<leader>tr", ":Telescope registers<cr>", { desc = "Telescope registers." })
-
 -- ## LSP ##
 
 local lsp_group = vim.api.nvim_create_augroup("k6e_lsp", {})

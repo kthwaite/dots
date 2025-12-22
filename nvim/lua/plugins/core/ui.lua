@@ -89,7 +89,9 @@ return {
 		version = "*",
 		dependencies = "nvim-tree/nvim-web-devicons",
 		opts = {
-			diagnostics = "nvim_lsp",
+			options = {
+				diagnostics = "nvim_lsp",
+			},
 		},
 		keys = {
 			{ "<leader>bb", "<cmd>BufferLineMovePrev<cr>", desc = "Next buffer tab" },
