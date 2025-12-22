@@ -1,4 +1,3 @@
----@type Elle
 local util = require("core.utility")
 local au = util.au
 local n = util.nnoremap
@@ -25,7 +24,6 @@ local format_patterns = {
 -- autoformat buffer on write
 local fmt_group = vim.api.nvim_create_augroup("k6e_fmt", { clear = true })
 au("BufWritePre", table.concat(format_patterns, ","), function(args)
-	--vim.lsp.buf.format({ async = true })
 	require("conform").format({ bufnr = args.buf })
 end, { group = fmt_group })
 

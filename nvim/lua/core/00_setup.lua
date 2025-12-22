@@ -1,11 +1,9 @@
 -- ==== Prelims
 local util = require("core.utility")
-local ignore_filetypes = util.default_ignore_filetypes
 local map = util.map
 local nnoremap = util.nnoremap
 local inoremap = util.inoremap
 local noremap = util.noremap
-local au = util.au
 
 -- ==== Setup ===================================================================
 vim.g.loaded_ruby_provider = 0 -- disable ruby provider
