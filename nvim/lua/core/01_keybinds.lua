@@ -102,41 +102,42 @@ n("<leader>tr", ":Telescope registers<cr>", { desc = "Telescope registers." })
 
 -- ## LSP ##
 
+local lsp_group = vim.api.nvim_create_augroup("k6e_lsp", {})
+
 vim.api.nvim_create_autocmd("LspAttach", {
-	group = vim.api.nvim_create_augroup("k6e_lsp", {}),
 	---Set up LSP keybinds on attach
 	---@param ev vim.api.keyset.create_autocmd.callback_args
 	callback = function(ev)
-		local client = vim.lsp.get_client_by_id(ev.data.client_id)
+		-- local client = vim.lsp.get_client_by_id(ev.data.client_id)
 		local bufnr = ev.buf
 		---Helper function to create a keymap
 		---@param key string
 		---@param func function
 		---@param desc string
-		local function n(key, func, desc)
-			local opts = { noremap = true, silent = true, buffer = bufnr }
-			opts["desc"] = desc or ""
-			vim.keymap.set("n", key, func, opts)
+		local function _n(key, func, desc)
+			local opts = { silent = true, buffer = bufnr, desc = desc or "" }
+			n(key, func, opts)
 		end
-		n("gD", vim.lsp.buf.declaration, "Go to declaration")
-		n("gd", vim.lsp.buf.definition, "Go to definition")
-		n("K", vim.lsp.buf.hover, "Hover documentation")
-		n("gi", vim.lsp.buf.implementation, "Go to implementation")
-		n("<space>wl", function()
+		_n("gD", vim.lsp.buf.declaration, "Go to declaration")
+		_n("gd", vim.lsp.buf.definition, "Go to definition")
+		_n("K", vim.lsp.buf.hover, "Hover documentation")
+		_n("gi", vim.lsp.buf.implementation, "Go to implementation")
+		_n("<space>wl", function()
 			print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
 		end, "List workspace folders")
-		n("<space>D", vim.lsp.buf.type_definition, "Go to type definition")
-		n("<space>rn", vim.lsp.buf.rename, "Rename symbol")
-		n("<space>ca", vim.lsp.buf.code_action, "Code action")
-		n("gr", vim.lsp.buf.references, "List references to symbol")
-		n("[d", function()
+		_n("<space>D", vim.lsp.buf.type_definition, "Go to type definition")
+		_n("<space>rn", vim.lsp.buf.rename, "Rename symbol")
+		_n("<space>ca", vim.lsp.buf.code_action, "Code action")
+		_n("gr", vim.lsp.buf.references, "List references to symbol")
+		_n("[d", function()
 			vim.diagnostic.jump({ count = -1, float = true })
 		end, "Previous diagnostic")
-		n("]d", function()
+		_n("]d", function()
 			vim.diagnostic.jump({ count = 1, float = true })
 		end, "Next diagnostic")
-		n("<space>f", function()
+		_n("<space>f", function()
 			vim.lsp.buf.format({ async = true })
 		end, "Format buffer")
 	end,
+	group = lsp_group,
 })
