@@ -77,7 +77,13 @@ n("<leader>tx", ":tabclose<CR>", { desc = "Close current tab." })
 
 -- # buffers
 -- close hidden buffers
-n("<leader>Bd", ":up | %bd | e#<cr>", { desc = "Close all hidden buffers." })
+n("<leader>Bd", function()
+	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+		if vim.api.nvim_get_option_value("buflisted", { buf = buf }) and not vim.api.nvim_buf_is_loaded(buf) then
+			vim.api.nvim_buf_delete(buf, { force = false })
+		end
+	end
+end, { desc = "Close all hidden buffers." })
 
 -- ## Plugins ##
 
