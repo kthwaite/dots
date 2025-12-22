@@ -1,21 +1,5 @@
 return {
 	{
-		"stevearc/dressing.nvim",
-		-- lazy = true,
-		init = function()
-			---@diagnostic disable-next-line: duplicate-set-field
-			vim.ui.select = function(...)
-				require("lazy").load({ plugins = { "dressing.nvim" } })
-				return vim.ui.select(...)
-			end
-			---@diagnostic disable-next-line: duplicate-set-field
-			vim.ui.input = function(...)
-				require("lazy").load({ plugins = { "dressing.nvim" } })
-				return vim.ui.input(...)
-			end
-		end,
-	},
-	{
 		"MeanderingProgrammer/render-markdown.nvim",
 		dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
 		opts = {},
@@ -98,5 +82,19 @@ return {
 			extensions = {},
 		},
 	},
-	{ "akinsho/bufferline.nvim", version = "*", dependencies = "nvim-tree/nvim-web-devicons", opts = {} },
+	{
+
+		"akinsho/bufferline.nvim",
+		event = "VeryLazy",
+		version = "*",
+		dependencies = "nvim-tree/nvim-web-devicons",
+		opts = {
+			diagnostics = "nvim_lsp",
+		},
+		keys = {
+			{ "<leader>bb", "<cmd>BufferLineMovePrev<cr>", desc = "Next buffer tab" },
+			{ "<leader>bn", "<cmd>BufferLineMoveNext<cr>", desc = "Prev buffer tab" },
+			{ "<leader>bp", "<cmd>BufferLinePick<cr>", desc = "Pick buffer tab" },
+		},
+	},
 }
