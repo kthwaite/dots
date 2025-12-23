@@ -3,6 +3,7 @@ local au = require("core.utility").au
 -- # helm filetype
 vim.filetype.add({
 	filename = {
+
 		["helmfile*.yaml"] = "helm",
 	},
 	extension = {

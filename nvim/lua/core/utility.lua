@@ -71,4 +71,21 @@ M.default_ignore_filetypes = {
 	"terminal",
 }
 
+-- Filetypes to auto-format on save (used by conform.nvim)
+M.format_on_save_patterns = {
+	"*.c",
+	"*.cpp",
+	"*.h",
+	"*.hpp",
+	"*.js",
+	"*.json",
+	"*.jsx",
+	"*.lua",
+	"*.py",
+	"*.rs",
+	"*.sql",
+	"*.ts",
+	"*.tsx",
+}
+
 return M

@@ -27,6 +27,17 @@ return {
 		lazy = false,
 		---@type snacks.Config
 		opts = {
+			indent = {
+				enabled = true,
+				animate = {
+					enabled = false,
+				},
+			},
+			lazygit = {
+				enabled = function()
+					return vim.fn.executable("lazygit") == 1
+				end,
+			},
 			dim = { enabled = true },
 			explorer = { enabled = true },
 			picker = { enabled = true },
@@ -137,7 +148,7 @@ return {
 				desc = "Git Status",
 			},
 
-			-- lazygit
+			-- lazygit (only when installed)
 			{
 				"<leader>gg",
 				function()

@@ -4,29 +4,6 @@ local n = util.nnoremap
 
 -- ## autocommands ##
 
--- # format on save
--- targets for autoformat on write
-local format_patterns = {
-	"*.c",
-	"*.cpp",
-	"*.h",
-	"*.hpp",
-	"*.js",
-	"*.json",
-	"*.jsx",
-	"*.lua",
-	"*.py",
-	"*.rs",
-	"*.sql",
-	"*.ts",
-	"*.tsx",
-}
--- autoformat buffer on write
-local fmt_group = vim.api.nvim_create_augroup("k6e_fmt", { clear = true })
-au("BufWritePre", table.concat(format_patterns, ","), function(args)
-	require("conform").format({ bufnr = args.buf })
-end, { group = fmt_group })
-
 -- highlight text on yank
 local util_group = vim.api.nvim_create_augroup("k6e_util", { clear = true })
 au("TextYankPost", "*", function()
@@ -55,8 +32,9 @@ n("<leader>st", function()
 	vim.api.nvim_win_set_height(0, 12)
 	vim.wo.winfixheight = true
 	vim.cmd.term()
+	vim.cmd.startinsert()
 end, { desc = "Open a terminal at the bottom of the screen." })
--- terminal
+-- Open a terminal in a vertical split.
 n("<leader>vt", function()
 	vim.cmd.vsplit()
 	vim.cmd.terminal()
@@ -94,10 +72,6 @@ n("<leader>ls", ":Lazy sync<CR>", { desc = "Sync all plugins." })
 -- # mason
 n("<leader>mo", ":Mason<CR>", { desc = "Open Mason." })
 n("<leader>mu", ":MasonUpdate<CR>", { desc = "Update all Mason packages." })
-
--- # neotree
--- toggle neotree
-n("<leader>ft", ":Neotree toggle<CR>", { desc = "Toggle Neotree." })
 
 -- ## LSP ##
 

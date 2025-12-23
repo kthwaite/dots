@@ -1,18 +1,20 @@
 -- neogit: A Magit clone for Neovim that provides a Git interface within Neovim.
--- included here because we default to using lazygit with snacks for git operations, but this may not be available on all systems
+-- Fallback when lazygit is not installed; snacks.lazygit is preferred when available
 return {
 	{
 		"NeogitOrg/neogit",
+		enabled = function()
+			return vim.fn.executable("lazygit") == 0
+		end,
 		dependencies = {
 			"nvim-lua/plenary.nvim",
-			"folke/snacks.nvim", -- optional dx fzf
-			"sindrets/diffview.nvim", -- optional - Diff integration
+			"folke/snacks.nvim",
+			"sindrets/diffview.nvim",
 		},
 		config = true,
 		keys = {
-			{ "<leader>gg", "<cmd>Neogit<CR>", desc = "Open Neogit UI" },
+			{ "<leader>gg", "<cmd>Neogit<CR>", desc = "Neogit" },
 			{ "<leader>gc", "<cmd>Neogit commit<CR>", desc = "Neogit commit" },
-			{ "<leader>gl", "<cmd>Neogit log<CR>", desc = "Neogit log" },
 		},
 	},
 }

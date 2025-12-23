@@ -1,7 +1,7 @@
 return {
 	settings = {
 		cargo = {
-			sysroot = "/opt/homebrew/cellar/rust/1.72.1",
+			sysroot = vim.fn.trim(vim.fn.system("rustc --print sysroot")),
 		},
 	},
 }
