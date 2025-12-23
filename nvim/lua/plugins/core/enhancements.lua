@@ -88,7 +88,7 @@ return {
 				desc = "Pick color scheme",
 			},
 			{
-				"<leader>vh",
+				"<leader>sh",
 				function()
 					require("snacks").picker.help()
 				end,
@@ -173,29 +173,6 @@ return {
 			},
 		},
 	},
-	--[[{
-		dir = vim.fn.stdpath("config") .. "/plugins/surround",
-		lazy = true,
-		event = "InsertEnter",
-		opts = {
-			mappings = true, -- Enable default mappings
-			insert_mappings = true, -- Enable insert mode mappings
-		},
-	},
-	-- register peeking (using local implementation)
-	{
-		dir = vim.fn.stdpath("config") .. "/plugins/peekup",
-		name = "peekup",
-		config = function()
-			require("peekup").setup()
-		end,
-	},
-	-- Local repeat implementation (replaces tpope/vim-repeat)
-	{
-		dir = vim.fn.stdpath("config") .. "/plugins/repeat",
-		lazy = false, -- Load immediately as other plugins depend on it
-	},
-]]
 	-- Neovim setup for init.lua and plugin development with full signature help, docs and completion for the nvim lua API.
 	{
 		"folke/lazydev.nvim",

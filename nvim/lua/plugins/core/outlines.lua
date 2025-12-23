@@ -14,20 +14,21 @@ return {
 	-- symbol outline
 	{
 		"hedyhli/outline.nvim",
-		config = function()
-			-- Example mapping to toggle outline
-			vim.keymap.set("n", "<leader>o", "<cmd>Outline<CR>", { desc = "Toggle Outline" })
-
-			require("outline").setup({
-				-- Your setup opts here (leave empty to use defaults)
-			})
-		end,
+		cmd = { "Outline", "OutlineOpen", "OutlineClose" },
+		keys = {
+			{ "<leader>o", "<cmd>Outline<CR>", desc = "Toggle Outline" },
+		},
+		opts = {},
 	},
 	-- highlight TODO, FIXME etc
 	{
 		"folke/todo-comments.nvim",
 		dependencies = { "nvim-tree/nvim-web-devicons", "nvim-lua/plenary.nvim", "folke/trouble.nvim" },
 		cmd = { "TodoQuickFix", "TodoLocList", "TodoTrouble" },
+		keys = {
+			{ "<leader>tt", "<cmd>TodoTrouble<CR>", desc = "Todo list (Trouble)" },
+			{ "<leader>tq", "<cmd>TodoQuickFix<CR>", desc = "Todo list (Quickfix)" },
+		},
 		opts = {},
 	},
 }

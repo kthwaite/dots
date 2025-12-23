@@ -18,12 +18,10 @@ return {
 				ensure_installed = {
 					"astro",
 					"bashls",
-					"biome",
 					"clangd",
 					"lua_ls",
 					"ruff",
 					"rust_analyzer",
-					"stylua",
 					"ts_ls",
 					"ty",
 					"zls",
