@@ -46,7 +46,7 @@ return {
 		keys = {
 			-- pickers
 			{
-				"<leader>tf",
+				"<leader>.",
 				function()
 					Snacks.picker.smart()
 				end,
