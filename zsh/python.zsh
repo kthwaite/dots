@@ -102,57 +102,22 @@ EOF
 }
 
 
-# Check current directory for Python project markers and auto-activate venv
-#  - Supports both traditional venv and uv projects
-#  - If found, deactivate any active venv (if different) and activate the local one
-#  - If not found and a venv is active, deactivate it
-function auto_activate_venv() {
-    local target_venv="$PWD/.venv"
-    
-    # Check for Python project markers
-    if [ -d ".venv" ] && ([ -f "pyproject.toml" ] || [ -f "requirements.txt" ] || [ -f "setup.py" ] || [ -f "uv.lock" ]); then
-        if [[ "$VIRTUAL_ENV" != "$target_venv" ]]; then
-            if [[ -n "$VIRTUAL_ENV" ]]; then
-                # Deactivating previously active venv
-                if type deactivate &>/dev/null; then
-                    deactivate
-                fi
-            fi
-            # Activating venv from $target_venv
-            source "$target_venv/bin/activate"
-        fi
-    else
-        # No local venv; if one is active, then deactivate
-        if [[ -n "$VIRTUAL_ENV" ]]; then
-            if type deactivate &>/dev/null; then
-                deactivate
-            fi
-        fi
-    fi
-}
-
-# Hook to run auto_activate_venv when changing directory
-autoload -Uz add-zsh-hook
-add-zsh-hook chpwd auto_activate_venv
-# Run auto_activate_venv on startup
-auto_activate_venv
-
 # -- UV specific helpers
 if [[ -x "$(command -v uv)" ]]; then
     # Quick aliases for common uv operations
     alias uvs='uv sync'
     alias uva='uv add'
     alias uvr='uv run'
+    alias uvn='uv run nvim'
     alias uvl='uv lock'
     alias uvi='uv pip install'
     alias uviu='uv pip install --upgrade'
-    alias uvx='uvx'  # Already available, but for consistency
     
     # Initialize a new uv project with common setup
     function uv-init() {
         local name="${1:-$(basename $(pwd))}"
         uv init --name "$name" --no-readme
-        uv add --dev ruff pytest pytest-cov
+        uv add --dev ruff ty pytest pytest-cov
         uv sync
     }
     
@@ -170,7 +135,7 @@ if [[ -x "$(command -v uv)" ]]; then
     
     # Install common CLI tools via uv
     function uv-tools() {
-        local tools=("ruff" "black" "mypy" "ipython" "httpie" "poetry" "pipx")
+        local tools=("ruff" "ty" "ipython" "httpie" )
         echo "Installing common Python CLI tools..."
         for tool in "${tools[@]}"; do
             echo "Installing $tool..."
