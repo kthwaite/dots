@@ -2,3 +2,21 @@
 snippet mise-venv
 	[env]
 	_.python.venv = ".venv"
+
+# bevy recommended Cargo.toml config
+snippet bevy-compile-config
+    [profile.dev]
+    # Enable a small amount of optimization in the dev profile.
+    opt-level = 1
+
+    [profile.dev.package."*"]
+    # Enable a large amount of optimization in the dev profile for dependencies.
+    opt-level = 3
+
+    [profile.release]
+    # Compile the entire crate as one unit.
+    # Slows compile times, marginal improvements.
+    codegen-units = 1
+    # Do a second optimization pass over the entire program, including dependencies.
+    # Slows compile times, marginal improvements.
+    lto = "thin"
