@@ -23,13 +23,14 @@ local ensure_filetypes = {
 
 return {
 	{
-		"nvim-treesitter/nvim-treesitter",
+		"kthwaite/nvim-treesitter",
 		build = ":TSUpdate",
+		branch = "main",
 		lazy = true,
 		ft = ensure_filetypes,
 		cmd = { "TSInstall" },
 		config = function()
-			require("nvim-treesitter.configs").setup({
+			require("nvim-treesitter.config").setup({
 				ensure_installed = ensure_filetypes,
 				modules = {},
 				ignore_install = {},
@@ -39,6 +40,14 @@ return {
 				sync_install = false,
 			})
 			-- local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
+			vim.api.nvim_create_autocmd("FileType", {
+				callback = function(args)
+					local treesitter = require("nvim-treesitter")
+					if vim.list_contains(treesitter.get_installed(), vim.treesitter.language.get_lang(args.match)) then
+						vim.treesitter.start(args.buf)
+					end
+				end,
+			})
 		end,
 	},
 
@@ -55,9 +64,9 @@ return {
 		},
 	},
 	-- splitting/joining blocks of code using treesitter
-	--[[{
+	{
 		"Wansmer/treesj",
-		requires = { "nvim-treesitter/nvim-treesitter" },
-	},]]
+		requires = { "kthwaite/nvim-treesitter" },
+	},
 	--
 }

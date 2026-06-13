@@ -9,6 +9,8 @@ return {
 				suggestion = { enabled = true, auto_trigger = true },
 				panel = { enabled = true },
 				filetypes = {
+					c = true,
+					cpp = true,
 					javascript = true,
 					javascriptreact = true,
 					typescript = true,

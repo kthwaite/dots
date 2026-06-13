@@ -238,7 +238,6 @@ return {
 			}
 		end,
 	},
-	{ "wellle/targets.vim" },
 	--------------------------------------------------------------------------------
 	-- # disabled
 	-- A plugin for profiling Vim and Neovim startup time.
