@@ -24,6 +24,30 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- ## Keybinds ##
 
+-- # general
+-- paste over currently selected text without yanking it
+vim.keymap.set("x", "<leader>p", [["_dP]], { desc = "Paste over currently selected text without yanking it." })
+-- delete text without copying it to the clipboard
+vim.keymap.set({ "n", "v" }, "<leader>d", [["_d]], { desc = "Delete text without copying it to the clipboard." })
+
+-- clear highlighting
+n("<C-c>", ":nohlsearch<CR>", { desc = "Clear search highlighting." })
+
+-- move selected lines up and down in visual mode
+vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "moves lines down in visual selection" })
+vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "moves lines up in visual selection" })
+
+-- keep cursor in place when indenting in visual mode
+vim.keymap.set("v", "<", "<gv", { desc = "Unindent and keep selection" })
+vim.keymap.set("v", ">", ">gv", { desc = "Indent and keep selection" })
+
+-- keep cursor in place when joining lines
+vim.keymap.set("n", "J", "mzJ`z", { desc = "Join lines without moving cursor" })
+
+-- center cursor when moving half a page up or down
+vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "move down in buffer with cursor centered" })
+vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "move up in buffer with cursor centered" })
+
 -- # terminal
 -- Open a terminal at the bottom of the screen with a fixed height.
 n("<leader>st", function()
@@ -62,6 +86,9 @@ n("<leader>Bd", function()
 		end
 	end
 end, { desc = "Close all hidden buffers." })
+
+-- # section headers
+n("<leader>ih", util.insert_section_header, { desc = "Insert section header comment" })
 
 -- ## Plugins ##
 
