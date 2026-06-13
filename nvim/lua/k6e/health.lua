@@ -10,6 +10,17 @@ local external_tools = {
 	{ cmd = "delta", name = "delta", hint = "Git diff pager (brew install git-delta)" },
 }
 
+-- Helper function to count the number of buffers attached to a given LSP client
+-- @param client table vim.LSP.Client or nil
+local function _count_buffers(client)
+	local buffers = client and client.attached_buffers or {}
+	local count = 0
+	for _ in pairs(buffers) do
+		count = count + 1
+	end
+	return count
+end
+
 M.check = function()
 	vim.health.start("k6e")
 	local ok_util, util = pcall(require, "core.utility")
