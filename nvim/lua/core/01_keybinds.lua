@@ -108,7 +108,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 	---Set up LSP keybinds on attach
 	---@param ev vim.api.keyset.create_autocmd.callback_args
 	callback = function(ev)
-		-- local client = vim.lsp.get_client_by_id(ev.data.client_id)
+		local client = vim.lsp.get_client_by_id(ev.data.client_id)
 		local bufnr = ev.buf
 		---Helper function to create a keymap
 		---@param key string
@@ -138,6 +138,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		_n("<space>f", function()
 			vim.lsp.buf.format({ async = true })
 		end, "Format buffer")
+
+		local ok, navic = pcall(require, "nvim-navic")
+		if ok and client ~= nil and client.server_capabilities.documentSymbolProvider then
+			navic.attach(client, bufnr)
+		end
 	end,
 	group = lsp_group,
 })
