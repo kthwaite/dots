@@ -32,10 +32,10 @@ M.check = function()
 	local uv = vim.uv or vim.loop
 	vim.health.info("System Information: " .. vim.inspect(uv.os_uname()))
 
-	if vim.fn.has("nvim-0.9") == 0 then
-		vim.health.warn("nvim version is < v0.9.0")
+	if vim.fn.has("nvim-0.12") == 0 then
+		vim.health.warn("nvim version is < v0.12.0")
 	else
-		vim.health.ok("nvim version is >= v0.9.0")
+		vim.health.ok("nvim version is >= v0.12.0")
 	end
 
 	-- Check extra plugins
@@ -63,8 +63,8 @@ M.check = function()
 	else
 		vim.health.ok(#clients .. " LSP client(s) attached:")
 		for _, client in ipairs(clients) do
-			local buffers = vim.lsp.get_buffers_by_client_id(client.id)
-			vim.health.info(string.format("  %s (id: %d, buffers: %d)", client.name, client.id, #buffers))
+			local bufcount = _count_buffers(client)
+			vim.health.info(string.format("  %s (id: %d, buffers: %d)", client.name, client.id, bufcount))
 		end
 	end
 
