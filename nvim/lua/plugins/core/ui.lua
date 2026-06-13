@@ -57,9 +57,19 @@ return {
 			},
 			sections = {
 				lualine_a = { "mode" },
-				lualine_b = { "branch", "diff" },
+				lualine_b = { "branch", "diff", "lsp_status" },
 				lualine_c = { "filename" },
-				lualine_x = { [[%{&filetype!=#''?&filetype:'none'}]] },
+				lualine_x = {
+					{
+						function()
+							return vim.fn.wordcount().words .. " words"
+						end,
+						cond = function()
+							return vim.tbl_contains({ "markdown", "text" }, vim.bo.filetype)
+						end,
+					},
+					[[%{&filetype!=#''?&filetype:'none'}]],
+				},
 				lualine_y = {
 					[=[%{strlen(&fenc)?&fenc:&enc}[%{&fileformat}]]=],
 					{
