@@ -33,6 +33,21 @@ return {
 					enabled = false,
 				},
 			},
+			picker = {
+				enabled = true,
+				sources = {
+					explorer = {
+						win = {
+							list = {
+								wo = {
+									number = true,
+									relativenumber = false,
+								},
+							},
+						},
+					},
+				},
+			},
 			lazygit = {
 				enabled = function()
 					return vim.fn.executable("lazygit") == 1
@@ -40,7 +55,6 @@ return {
 			},
 			dim = { enabled = true },
 			explorer = { enabled = true },
-			picker = { enabled = true },
 			zen = { enabled = true },
 		},
 		keys = {
