@@ -76,7 +76,9 @@ return {
 			{
 				"<leader>/",
 				function()
-					Snacks.picker.grep()
+					Snacks.picker.grep({
+						live = true,
+					})
 				end,
 				desc = "Live grep",
 			},
