@@ -1,10 +1,11 @@
+local selected_git_ui = require("core.external_tools").git_ui()
 local keymaps = require("core.keymaps")
 local git_ui = keymaps.owner("git-ui")
 local snacks = keymaps.owner("snacks")
 local which_key = keymaps.owner("which-key")
-local has_lazygit = vim.g.has_lazygit == true
+local use_lazygit = selected_git_ui == "lazygit"
 local git_ui_action = "<cmd>Neogit<cr>"
-if has_lazygit then
+if use_lazygit then
 	git_ui_action = function()
 		require("snacks").lazygit()
 	end
@@ -58,7 +59,7 @@ return {
 			},
 			lazygit = {
 				enabled = function()
-					return has_lazygit
+					return use_lazygit
 				end,
 			},
 			dim = { enabled = true },
