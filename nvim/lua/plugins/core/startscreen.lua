@@ -1,5 +1,11 @@
 local header = require("plugins.headers.venus")
-local version_string = require("core.utility").version_string
+local function version_string()
+	local version = vim.version()
+	if version == nil then
+		return "UNKNOWN"
+	end
+	return ("v%d.%d.%d"):format(version.major, version.minor, version.patch)
+end
 return {
 	{
 		"goolord/alpha-nvim",
@@ -12,7 +18,7 @@ return {
 				{ type = "padding", val = 1 },
 				header.header,
 				{ type = "padding", val = 1 },
-				{ type = "text", val = "NVIM" .. version_string(), opts = { position = "center" } },
+				{ type = "text", val = "NVIM " .. version_string(), opts = { position = "center" } },
 				{ type = "padding", val = 1 },
 				section.top_buttons,
 				{ type = "group", val = { section.mru }, opts = { position = "center" } },
