@@ -15,39 +15,6 @@ M.au = function(event, pattern, callback, opts)
 	vim.api.nvim_create_autocmd(event, opts)
 end
 
----Convenience function to create a keymap
-M.map = vim.keymap.set
-
----Convenience function to create a normal mode keymap
----@param capt string # keymap capture
----@param repl string|function # keymap replacement
----@param opts? table # options passed to nvim_set_keymap
-M.nnoremap = function(capt, repl, opts)
-	opts = opts or {}
-	opts["noremap"] = true
-	vim.keymap.set("n", capt, repl, opts)
-end
-
----Convenience function to create an insert mode keymap
----@param capt string # keymap capture
----@param repl string|function # keymap replacement
----@param opts? table # options passed to nvim_set_keymap
-M.inoremap = function(capt, repl, opts)
-	opts = opts or {}
-	opts["noremap"] = true
-	vim.keymap.set("i", capt, repl, opts)
-end
-
----Convenience function to create a normal mode keymap
----@param capt string # keymap capture
----@param repl string|function # keymap replacement
----@param opts? table # options passed to nvim_set_keymap
-M.noremap = function(capt, repl, opts)
-	opts = opts or {}
-	opts["noremap"] = true
-	vim.keymap.set("", capt, repl, opts)
-end
-
 ---Get the current version of Neovim as a string in the form "v0.0.0"
 M.version_string = function()
 	local version = vim.version()

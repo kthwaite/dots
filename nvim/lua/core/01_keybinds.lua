@@ -1,6 +1,15 @@
 local util = require("core.utility")
 local au = util.au
-local n = util.nnoremap
+local keymaps = require("core.keymaps")
+local buffers = keymaps.owner("buffers")
+local editing = keymaps.owner("editing")
+local lazy = keymaps.owner("lazy")
+local mason = keymaps.owner("mason")
+local python = keymaps.owner("python")
+local rust = keymaps.owner("rust")
+local search = keymaps.owner("search")
+local tabs = keymaps.owner("tabs")
+local terminal = keymaps.owner("terminal")
 
 -- ## autocommands ##
 
@@ -26,76 +35,91 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- # general
 -- paste over currently selected text without yanking it
-vim.keymap.set("x", "<leader>p", [["_dP]], { desc = "Paste over currently selected text without yanking it." })
+editing.eager("<leader>p", [["_dP]], "Paste over currently selected text without yanking it.", {
+	mode = "x",
+	silent = false,
+})
 -- delete text without copying it to the clipboard
-vim.keymap.set({ "n", "v" }, "<leader>d", [["_d]], { desc = "Delete text without copying it to the clipboard." })
+editing.eager("<leader>d", [["_d]], "Delete text without copying it to the clipboard.", {
+	mode = { "n", "v" },
+	silent = false,
+})
 
 -- clear highlighting
-n("<C-c>", ":nohlsearch<CR>", { desc = "Clear search highlighting." })
+search.eager("<C-c>", ":nohlsearch<CR>", "Clear search highlighting.", { silent = false })
 
 -- move selected lines up and down in visual mode
-vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "moves lines down in visual selection" })
-vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "moves lines up in visual selection" })
+editing.eager("J", ":m '>+1<CR>gv=gv", "moves lines down in visual selection", {
+	mode = "v",
+	silent = false,
+})
+editing.eager("K", ":m '<-2<CR>gv=gv", "moves lines up in visual selection", {
+	mode = "v",
+	silent = false,
+})
 
 -- keep cursor in place when indenting in visual mode
-vim.keymap.set("v", "<", "<gv", { desc = "Unindent and keep selection" })
-vim.keymap.set("v", ">", ">gv", { desc = "Indent and keep selection" })
+editing.eager("<", "<gv", "Unindent and keep selection", { mode = "v", silent = false })
+editing.eager(">", ">gv", "Indent and keep selection", { mode = "v", silent = false })
 
 -- keep cursor in place when joining lines
-vim.keymap.set("n", "J", "mzJ`z", { desc = "Join lines without moving cursor" })
+editing.eager("J", "mzJ`z", "Join lines without moving cursor", { silent = false })
 
 -- center cursor when moving half a page up or down
-vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "move down in buffer with cursor centered" })
-vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "move up in buffer with cursor centered" })
+editing.eager("<C-d>", "<C-d>zz", "move down in buffer with cursor centered", { silent = false })
+editing.eager("<C-u>", "<C-u>zz", "move up in buffer with cursor centered", { silent = false })
 
 -- # terminal
 -- Open a terminal at the bottom of the screen with a fixed height.
-n("<leader>st", function()
+terminal.eager("<leader>st", function()
 	vim.cmd.new()
 	vim.cmd.wincmd("J")
 	vim.api.nvim_win_set_height(0, 12)
 	vim.wo.winfixheight = true
 	vim.cmd.term()
 	vim.cmd.startinsert()
-end, { desc = "Open a terminal at the bottom of the screen." })
+end, "Open a terminal at the bottom of the screen.", { silent = false })
 -- Open a terminal in a vertical split.
-n("<leader>vt", function()
+terminal.eager("<leader>vt", function()
 	vim.cmd.vsplit()
 	vim.cmd.terminal()
 	vim.cmd.startinsert()
-end, { desc = "Open terminal in a vertical split" })
-
--- # split navigation
-n("<leader>sl", "<C-w>l", { desc = "Move to the left split." })
-n("<leader>sh", "<C-w>r", { desc = "Move to the right split." })
-n("<leader>sj", "<C-w>j", { desc = "Move to the bottom split." })
-n("<leader>sk", "<C-w>k", { desc = "Move to the top split." })
+end, "Open terminal in a vertical split", { silent = false })
 
 -- # tabs
-n("<leader>tn", ":tabnext<CR>", { desc = "Go to next tab." })
-n("<leader>tp", ":tabprevious<CR>", { desc = "Go to previous tab." })
-n("<leader>tc", ":tabnew<CR>", { desc = "Create a new tab." })
-n("<leader>tx", ":tabclose<CR>", { desc = "Close current tab." })
+tabs.eager("<leader>tn", ":tabnext<CR>", "Go to next tab.", { silent = false })
+tabs.eager("<leader>tp", ":tabprevious<CR>", "Go to previous tab.", { silent = false })
+tabs.eager("<leader>tc", ":tabnew<CR>", "Create a new tab.", { silent = false })
+tabs.eager("<leader>tx", ":tabclose<CR>", "Close current tab.", { silent = false })
 
 -- # buffers
 -- close hidden buffers
-n("<leader>Bd", function()
+buffers.eager("<leader>Bd", function()
 	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
 		if vim.api.nvim_get_option_value("buflisted", { buf = buf }) and not vim.api.nvim_buf_is_loaded(buf) then
 			vim.api.nvim_buf_delete(buf, { force = false })
 		end
 	end
-end, { desc = "Close all hidden buffers." })
+end, "Close all hidden buffers.", { silent = false })
 
 -- # section headers
-n("<leader>ih", util.insert_section_header, { desc = "Insert section header comment" })
+editing.eager("<leader>ih", util.insert_section_header, "Insert section header comment", { silent = false })
 
 -- ## Plugins ##
 
 -- # lazy
-n("<leader>lu", ":Lazy update<CR>", { desc = "Update all plugins." })
-n("<leader>ls", ":Lazy sync<CR>", { desc = "Sync all plugins." })
+lazy.eager("<leader>lu", ":Lazy update<CR>", "Update all plugins.", { silent = false })
+lazy.eager("<leader>ls", ":Lazy sync<CR>", "Sync all plugins.", { silent = false })
 
 -- # mason
-n("<leader>mo", ":Mason<CR>", { desc = "Open Mason." })
-n("<leader>mu", ":MasonUpdate<CR>", { desc = "Update all Mason packages." })
+mason.eager("<leader>mo", ":Mason<CR>", "Open Mason.", { silent = false })
+mason.eager("<leader>mu", ":MasonUpdate<CR>", "Update all Mason packages.", { silent = false })
+
+-- # filetype scoped
+rust.eager("<leader>a", function()
+	vim.cmd.RustLsp("codeAction")
+end, "Rust code action", { scope = { filetypes = "rust" } })
+python.eager("<leader>pi", ":w<cr>:term uv run python -i % <cr>", "Start IPython REPL", {
+	scope = { filetypes = "python" },
+	silent = false,
+})

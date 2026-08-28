@@ -1,3 +1,8 @@
+local keymaps = require("core.keymaps")
+local outline = keymaps.owner("outline")
+local todo_comments = keymaps.owner("todo-comments")
+local trouble = keymaps.owner("trouble")
+
 return {
 
 	-- # outlines and navigation
@@ -8,7 +13,7 @@ return {
 		opts = {},
 		cmd = { "Trouble" },
 		keys = {
-			{ "<leader>te", "<cmd>Trouble diagnostics toggle<CR>" },
+			trouble.lazy("<leader>te", "<cmd>Trouble diagnostics toggle<CR>", "Toggle diagnostics"),
 		},
 	},
 	-- symbol outline
@@ -16,7 +21,7 @@ return {
 		"hedyhli/outline.nvim",
 		cmd = { "Outline", "OutlineOpen", "OutlineClose" },
 		keys = {
-			{ "<leader>o", "<cmd>Outline<CR>", desc = "Toggle Outline" },
+			outline.lazy("<leader>o", "<cmd>Outline<CR>", "Toggle Outline"),
 		},
 		opts = {},
 	},
@@ -26,8 +31,8 @@ return {
 		dependencies = { "nvim-tree/nvim-web-devicons", "nvim-lua/plenary.nvim", "folke/trouble.nvim" },
 		cmd = { "TodoQuickFix", "TodoLocList", "TodoTrouble" },
 		keys = {
-			{ "<leader>tt", "<cmd>TodoTrouble<CR>", desc = "Todo list (Trouble)" },
-			{ "<leader>tq", "<cmd>TodoQuickFix<CR>", desc = "Todo list (Quickfix)" },
+			todo_comments.lazy("<leader>tt", "<cmd>TodoTrouble<CR>", "Todo list (Trouble)"),
+			todo_comments.lazy("<leader>tq", "<cmd>TodoQuickFix<CR>", "Todo list (Quickfix)"),
 		},
 		opts = {},
 	},

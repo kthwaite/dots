@@ -14,6 +14,7 @@ vim.opt.runtimepath:prepend(lazypath)
 
 local default_spec = {
 	{ import = "plugins.core" },
+	{ import = "plugins.neogit" },
 	{ import = "plugins.extras" },
 }
 
@@ -86,5 +87,6 @@ M.spec = build_spec(M.extra_plugins, M.session_plugins)
 require("lazy").setup({
 	spec = M.spec,
 })
+require("core.keymaps").activate()
 
 return M

@@ -33,6 +33,8 @@ local function find_spec(specs, name)
 	error("missing plugin specification: " .. name)
 end
 
+local keymaps = require("core.keymaps")
+
 local specs = require("plugins.core.lsp")
 local lsp_spec = find_spec(specs, "neovim/nvim-lspconfig")
 
@@ -106,19 +108,53 @@ local function mapping_for(bufnr, lhs)
 end
 
 local expected_mappings = {
-	{ lhs = "gD", desc = "Go to declaration", operation = vim.lsp.buf.declaration },
-	{ lhs = "gd", desc = "Go to definition", operation = vim.lsp.buf.definition },
-	{ lhs = "K", desc = "Hover documentation", operation = vim.lsp.buf.hover },
-	{ lhs = "gi", desc = "Go to implementation", operation = vim.lsp.buf.implementation },
-	{ lhs = " wl", desc = "List workspace folders" },
-	{ lhs = " D", desc = "Go to type definition", operation = vim.lsp.buf.type_definition },
-	{ lhs = " rn", desc = "Rename symbol", operation = vim.lsp.buf.rename },
-	{ lhs = " ca", desc = "Code action", operation = vim.lsp.buf.code_action },
-	{ lhs = "gr", desc = "List references to symbol", operation = vim.lsp.buf.references },
-	{ lhs = "[d", desc = "Previous diagnostic" },
-	{ lhs = "]d", desc = "Next diagnostic" },
-	{ lhs = " f", desc = "Format buffer" },
+	{ chord = "gD", lhs = "gD", desc = "Go to declaration", operation = vim.lsp.buf.declaration },
+	{ chord = "gd", lhs = "gd", desc = "Go to definition", operation = vim.lsp.buf.definition },
+	{ chord = "K", lhs = "K", desc = "Hover documentation", operation = vim.lsp.buf.hover },
+	{ chord = "gi", lhs = "gi", desc = "Go to implementation", operation = vim.lsp.buf.implementation },
+	{ chord = "<space>wl", lhs = " wl", desc = "List workspace folders" },
+	{ chord = "<space>D", lhs = " D", desc = "Go to type definition", operation = vim.lsp.buf.type_definition },
+	{ chord = "<space>rn", lhs = " rn", desc = "Rename symbol", operation = vim.lsp.buf.rename },
+	{ chord = "<space>ca", lhs = " ca", desc = "Code action", operation = vim.lsp.buf.code_action },
+	{ chord = "gr", lhs = "gr", desc = "List references to symbol", operation = vim.lsp.buf.references },
+	{ chord = "[d", lhs = "[d", desc = "Previous diagnostic" },
+	{ chord = "]d", lhs = "]d", desc = "Next diagnostic" },
+	{ chord = "<space>f", lhs = " f", desc = "Format buffer" },
 }
+
+test("declares LSP mappings as scoped ownership claims", function()
+	local picker_options
+	_G.Snacks = {
+		picker = {
+			pick = function(options)
+				picker_options = options
+			end,
+		},
+	}
+
+	keymaps.activate()
+	vim.cmd.Keymaps()
+
+	local claims = {}
+	for _, item in ipairs(picker_options.items) do
+		if item.owner == "lsp" then
+			claims[item.chord] = item
+		end
+	end
+	local claim_count = 0
+	for _ in pairs(claims) do
+		claim_count = claim_count + 1
+	end
+	equal(claim_count, #expected_mappings, "every LSP mapping must have one ownership claim")
+	for _, expected in ipairs(expected_mappings) do
+		local claim = claims[expected.chord]
+		truthy(claim ~= nil, "missing LSP ownership claim: " .. expected.chord)
+		equal(claim.description, expected.desc, "LSP claim description changed: " .. expected.chord)
+		equal(claim.mode, "n", "LSP claim mode changed: " .. expected.chord)
+		equal(claim.scope, "lsp{}", "LSP claim must use LSP Scope: " .. expected.chord)
+		equal(claim.realization, "eager", "LSP claim must use scoped eager realization: " .. expected.chord)
+	end
+end)
 
 test("registers one LspAttach event", function()
 	local autocmds = vim.api.nvim_get_autocmds({ group = "k6e_lsp", event = "LspAttach" })
@@ -128,15 +164,21 @@ end)
 test("preserves buffer-local mappings and navigation context", function()
 	local bufnr = vim.api.nvim_create_buf(false, true)
 	local original_get_client = vim.lsp.get_client_by_id
+	local original_get_clients = vim.lsp.get_clients
 	local attached
+	local client = {
+		id = 41,
+		name = "test_lsp",
+		server_capabilities = { documentSymbolProvider = true },
+	}
 
+	vim.lsp.get_clients = function(options)
+		equal(options, { bufnr = bufnr }, "scoped mapping queried the wrong buffer")
+		return { client }
+	end
 	vim.lsp.get_client_by_id = function(client_id)
 		equal(client_id, 41, "attachment client id changed")
-		return {
-			id = client_id,
-			name = "test_lsp",
-			server_capabilities = { documentSymbolProvider = true },
-		}
+		return client
 	end
 	package.loaded["nvim-navic"] = {
 		attach = function(client, attached_bufnr)
@@ -185,12 +227,14 @@ test("preserves buffer-local mappings and navigation context", function()
 
 	package.loaded["nvim-navic"] = nil
 	vim.lsp.get_client_by_id = original_get_client
+	vim.lsp.get_clients = original_get_clients
 	vim.api.nvim_buf_delete(bufnr, { force = true })
 end)
 
 test("skips navigation context without a capable client", function()
 	local bufnr = vim.api.nvim_create_buf(false, true)
 	local original_get_client = vim.lsp.get_client_by_id
+	local original_get_clients = vim.lsp.get_clients
 	local attach_count = 0
 
 	package.loaded["nvim-navic"] = {
@@ -200,6 +244,9 @@ test("skips navigation context without a capable client", function()
 	}
 	vim.lsp.get_client_by_id = function()
 		return { server_capabilities = { documentSymbolProvider = false } }
+	end
+	vim.lsp.get_clients = function()
+		return { { id = 42, name = "test_lsp" } }
 	end
 	vim.api.nvim_exec_autocmds("LspAttach", { buffer = bufnr, data = { client_id = 42 } })
 
@@ -215,12 +262,14 @@ test("skips navigation context without a capable client", function()
 
 	package.loaded["nvim-navic"] = nil
 	vim.lsp.get_client_by_id = original_get_client
+	vim.lsp.get_clients = original_get_clients
 	vim.api.nvim_buf_delete(bufnr, { force = true })
 end)
 
 test("continues attachment when nvim-navic is unavailable", function()
 	local bufnr = vim.api.nvim_create_buf(false, true)
 	local original_get_client = vim.lsp.get_client_by_id
+	local original_get_clients = vim.lsp.get_clients
 	local original_preload = package.preload["nvim-navic"]
 
 	package.loaded["nvim-navic"] = nil
@@ -229,6 +278,9 @@ test("continues attachment when nvim-navic is unavailable", function()
 	end
 	vim.lsp.get_client_by_id = function()
 		return { server_capabilities = { documentSymbolProvider = true } }
+	end
+	vim.lsp.get_clients = function()
+		return { { id = 44, name = "test_lsp" } }
 	end
 
 	local ok, err = pcall(vim.api.nvim_exec_autocmds, "LspAttach", {
@@ -243,6 +295,7 @@ test("continues attachment when nvim-navic is unavailable", function()
 	package.preload["nvim-navic"] = original_preload
 	package.loaded["nvim-navic"] = nil
 	vim.lsp.get_client_by_id = original_get_client
+	vim.lsp.get_clients = original_get_clients
 	vim.api.nvim_buf_delete(bufnr, { force = true })
 end)
 

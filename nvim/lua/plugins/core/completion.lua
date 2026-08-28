@@ -1,10 +1,59 @@
+local keymaps = require("core.keymaps")
+local blink = keymaps.owner("blink")
+local luasnip = keymaps.owner("luasnip")
+
+local function completion_tab()
+	if not require("blink.cmp.config").enabled() then
+		return "<Tab>"
+	end
+
+	local copilot = require("copilot.suggestion")
+	if copilot.is_visible() then
+		copilot.accept()
+		return ""
+	end
+
+	local cmp = require("blink.cmp")
+	if cmp.snippet_active() then
+		if cmp.accept() then
+			return ""
+		end
+	elseif cmp.select_and_accept() then
+		return ""
+	end
+
+	if cmp.snippet_forward() then
+		return ""
+	end
+	return "<Tab>"
+end
+
+local function cmdline_completion_tab()
+	local copilot = require("copilot.suggestion")
+	if copilot.is_visible() then
+		copilot.accept()
+		return ""
+	end
+
+	if require("blink.cmp").select_and_accept() then
+		return ""
+	end
+	return "<Tab>"
+end
+
+blink.eager("<Tab>", completion_tab, "Accept completion or advance snippet", { mode = "i", expr = true })
+blink.eager("<Tab>", cmdline_completion_tab, "Accept command-line completion", { mode = "c", expr = true })
+luasnip.eager("<Tab>", function()
+	return require("luasnip.util.select").cut_keys
+end, "Store selection for snippet", { mode = "x", expr = true })
+
 return {
 	{
 		"L3MON4D3/LuaSnip",
 		version = "v2.*",
 		build = "make install_jsregexp",
 		config = function()
-			require("luasnip").setup({ store_selection_keys = "<Tab>" })
+			require("luasnip").setup({})
 			require("luasnip.loaders.from_snipmate").lazy_load()
 		end,
 	},
@@ -35,20 +84,7 @@ return {
 			-- See :h blink-cmp-config-keymap for defining your own keymap
 			keymap = {
 				preset = "super-tab",
-				["<Tab>"] = {
-					function(cmp)
-						local copilot = require("copilot.suggestion")
-						if copilot.is_visible() then
-							copilot.accept()
-							-- IMPORTANT: don’t run blink’s fallback when we just accepted Copilot
-							return
-						end
-
-						-- otherwise, do whatever blink would normally do on <Tab>
-						return cmp.select_and_accept()
-					end,
-					"fallback",
-				},
+				["<Tab>"] = false,
 			},
 
 			appearance = {

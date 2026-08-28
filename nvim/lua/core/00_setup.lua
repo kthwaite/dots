@@ -1,9 +1,9 @@
 -- ==== Prelims
-local util = require("core.utility")
-local map = util.map
-local nnoremap = util.nnoremap
-local inoremap = util.inoremap
-local noremap = util.noremap
+local keymaps = require("core.keymaps")
+local editing = keymaps.owner("editing")
+local insert = keymaps.owner("insert")
+local search = keymaps.owner("search")
+local window = keymaps.owner("window")
 
 -- ==== Setup ===================================================================
 vim.g.loaded_ruby_provider = 0 -- disable ruby provider
@@ -12,6 +12,7 @@ vim.g.loaded_perl_provider = 0 -- disable perl provider
 vim.g.have_nerd_font = true -- enable nerd font by default
 vim.g.mapleader = " " -- map leader to space
 vim.g.localleader = " " -- map localleader to space
+vim.g.has_lazygit = vim.fn.executable("lazygit") == 1 -- capture Git UI capability once at startup
 vim.opt.shell = "zsh -l" -- use zsh as default shell
 vim.opt.termguicolors = true -- enable true color
 vim.opt.encoding = "utf-8" -- default encoding is utf-8
@@ -47,11 +48,11 @@ vim.opt.ignorecase = true -- search case insensitive
 vim.opt.smartcase = true -- search case-sensitive when uppercase characters appear in search
 vim.opt.grepprg = "rg --vimgrep"
 -- search magic by default
-nnoremap("/", "/\\v")
+search.eager("/", "/\\v", "Search with very magic", { silent = false })
 -- search magic by default
-map("c", "%s/", "%s/\\v")
+search.eager("%s/", "%s/\\v", "Substitute with very magic", { mode = "c", silent = false })
 -- yank
-nnoremap("Y", "y$")
+editing.eager("Y", "y$", "Yank to end of line", { silent = false })
 vim.opt.clipboard = "unnamedplus"
 
 -- enable mouse
@@ -111,15 +112,15 @@ vim.opt.foldenable = false -- automatic code folding is the devil's work
 
 -- ==== Remaps ==================================================================
 -- remap esc to jk
-inoremap("jk", "<esc>")
-inoremap("<esc>", "<nop>")
+insert.eager("jk", "<esc>", "Leave insert mode", { mode = "i", silent = false })
+insert.eager("<esc>", "<nop>", "Disable Escape in insert mode", { mode = "i", silent = false })
 -- # splits
 -- remap split navigation
-noremap("<C-h>", "<C-w>h", { desc = "Move to left split." })
-noremap("<C-j>", "<C-w>j", { desc = "Move to down split." })
-noremap("<C-k>", "<C-w>k", { desc = "Move to up split." })
-noremap("<C-l>", "<C-w>l", { desc = "Move to right split." })
+window.eager("<C-h>", "<C-w>h", "Move to left split.", { mode = { "n", "v", "o" }, silent = false })
+window.eager("<C-j>", "<C-w>j", "Move to down split.", { mode = { "n", "v", "o" }, silent = false })
+window.eager("<C-k>", "<C-w>k", "Move to up split.", { mode = { "n", "v", "o" }, silent = false })
+window.eager("<C-l>", "<C-w>l", "Move to right split.", { mode = { "n", "v", "o" }, silent = false })
 -- horizontal split to vertical split
-nnoremap("<leader>hv", "<C-w>t<C-w>H", { desc = "Horizontal split to vertical split." })
+window.eager("<leader>hv", "<C-w>t<C-w>H", "Horizontal split to vertical split.", { silent = false })
 -- vertical split to horizontal split
-nnoremap("<leader>vh", "<C-w>t<C-w>K", { desc = "Vertical split to horizontal split." })
+window.eager("<leader>vh", "<C-w>t<C-w>K", "Vertical split to horizontal split.", { silent = false })

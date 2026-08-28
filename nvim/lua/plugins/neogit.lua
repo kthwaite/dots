@@ -1,10 +1,20 @@
+local neogit = require("core.keymaps").owner("neogit")
+local enabled = not vim.g.has_lazygit
+local keys
+if enabled then
+	keys = {
+		neogit.lazy("<leader>gc", "<cmd>Neogit commit<CR>", "Neogit commit"),
+	}
+end
+
 -- neogit: A Magit clone for Neovim that provides a Git interface within Neovim.
 -- Fallback when lazygit is not installed; snacks.lazygit is preferred when available
 return {
 	{
 		"NeogitOrg/neogit",
+		cmd = "Neogit",
 		enabled = function()
-			return vim.fn.executable("lazygit") == 0
+			return enabled
 		end,
 		dependencies = {
 			"nvim-lua/plenary.nvim",
@@ -12,9 +22,6 @@ return {
 			"sindrets/diffview.nvim",
 		},
 		config = true,
-		keys = {
-			{ "<leader>gg", "<cmd>Neogit<CR>", desc = "Neogit" },
-			{ "<leader>gc", "<cmd>Neogit commit<CR>", desc = "Neogit commit" },
-		},
+		keys = keys,
 	},
 }

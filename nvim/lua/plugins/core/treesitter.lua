@@ -1,3 +1,5 @@
+local neogen = require("core.keymaps").owner("neogen")
+
 local ensure_filetypes = {
 	"bash",
 	"c",
@@ -60,7 +62,7 @@ return {
 			})
 		end,
 		keys = {
-			{ "<leader>gn", "<cmd>Neogen<cr>", desc = "Neogen" },
+			neogen.lazy("<leader>gn", "<cmd>Neogen<cr>", "Neogen"),
 		},
 	},
 	-- splitting/joining blocks of code using treesitter

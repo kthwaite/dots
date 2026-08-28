@@ -1,3 +1,7 @@
+local keymaps = require("core.keymaps")
+local bufferline = keymaps.owner("bufferline")
+local noice = keymaps.owner("noice")
+
 return {
 	{
 		"MeanderingProgrammer/render-markdown.nvim",
@@ -32,14 +36,9 @@ return {
 			},
 		},
 		keys = {
-			{
-				"<S-Enter>",
-				function()
-					require("noice").redirect(vim.fn.getcmdline())
-				end,
-				mode = "c",
-				desc = "Redirect Cmdline",
-			},
+			noice.lazy("<S-Enter>", function()
+				require("noice").redirect(vim.fn.getcmdline())
+			end, "Redirect Cmdline", { mode = "c" }),
 		},
 	},
 	-- # statusline
@@ -104,9 +103,9 @@ return {
 			},
 		},
 		keys = {
-			{ "<leader>bb", "<cmd>BufferLineMovePrev<cr>", desc = "Next buffer tab" },
-			{ "<leader>bn", "<cmd>BufferLineMoveNext<cr>", desc = "Prev buffer tab" },
-			{ "<leader>bp", "<cmd>BufferLinePick<cr>", desc = "Pick buffer tab" },
+			bufferline.lazy("<leader>bb", "<cmd>BufferLineMovePrev<cr>", "Next buffer tab"),
+			bufferline.lazy("<leader>bn", "<cmd>BufferLineMoveNext<cr>", "Prev buffer tab"),
+			bufferline.lazy("<leader>bp", "<cmd>BufferLinePick<cr>", "Pick buffer tab"),
 		},
 	},
 }

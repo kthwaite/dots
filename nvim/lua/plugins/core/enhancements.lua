@@ -1,3 +1,15 @@
+local keymaps = require("core.keymaps")
+local git_ui = keymaps.owner("git-ui")
+local snacks = keymaps.owner("snacks")
+local which_key = keymaps.owner("which-key")
+local has_lazygit = vim.g.has_lazygit == true
+local git_ui_action = "<cmd>Neogit<cr>"
+if has_lazygit then
+	git_ui_action = function()
+		require("snacks").lazygit()
+	end
+end
+
 return {
 	{
 		"folke/which-key.nvim",
@@ -12,13 +24,9 @@ return {
 			expand = 0, -- expand groups when <= n mappings
 		},
 		keys = {
-			{
-				"<leader>?",
-				function()
-					require("which-key").show({ global = false })
-				end,
-				desc = "Buffer Local Keymaps (which-key)",
-			},
+			which_key.lazy("<leader>?", function()
+				require("which-key").show({ global = false })
+			end, "Buffer Local Keymaps (which-key)"),
 		},
 	},
 	{
@@ -50,7 +58,7 @@ return {
 			},
 			lazygit = {
 				enabled = function()
-					return vim.fn.executable("lazygit") == 1
+					return has_lazygit
 				end,
 			},
 			dim = { enabled = true },
@@ -59,134 +67,62 @@ return {
 		},
 		keys = {
 			-- pickers
-			{
-				"<leader>.",
-				function()
-					Snacks.picker.smart()
-				end,
-				desc = "Find files",
-			},
-			{
-				"<leader>,",
-				function()
-					Snacks.picker.buffers()
-				end,
-				desc = "Find buffers",
-			},
-			{
-				"<leader>/",
-				function()
-					Snacks.picker.grep({
-						live = true,
-					})
-				end,
-				desc = "Live grep",
-			},
-			{
-				"<leader>:",
-				function()
-					Snacks.picker.command_history()
-				end,
-				desc = "Command history",
-			},
-			{
-				"<leader>n",
-				function()
-					Snacks.picker.notifications()
-				end,
-				desc = "Notification history",
-			},
-			{
-				"<leader>th",
-				function()
-					require("snacks").picker.colorschemes({ layout = "ivy" })
-				end,
-				desc = "Pick color scheme",
-			},
-			{
-				"<leader>sh",
-				function()
-					require("snacks").picker.help()
-				end,
-				desc = "Help pages",
-			},
-			{
-				"<leader>cf",
-				function()
-					Snacks.picker.files({ cwd = vim.fn.stdpath("config") })
-				end,
-				desc = "Find config file",
-			},
-			{
-				"<leader>cg",
-				function()
-					Snacks.picker.grep({ cwd = vim.fn.stdpath("config") })
-				end,
-				desc = "Grep config files",
-			},
-			{
-				"<leader>sk",
-				function()
-					Snacks.picker.keymaps()
-				end,
-				desc = "Keymaps",
-			},
+			snacks.lazy("<leader>.", function()
+				Snacks.picker.smart()
+			end, "Find files"),
+			snacks.lazy("<leader>,", function()
+				Snacks.picker.buffers()
+			end, "Find buffers"),
+			snacks.lazy("<leader>/", function()
+				Snacks.picker.grep({
+					live = true,
+				})
+			end, "Live grep"),
+			snacks.lazy("<leader>:", function()
+				Snacks.picker.command_history()
+			end, "Command history"),
+			snacks.lazy("<leader>n", function()
+				Snacks.picker.notifications()
+			end, "Notification history"),
+			snacks.lazy("<leader>th", function()
+				require("snacks").picker.colorschemes({ layout = "ivy" })
+			end, "Pick color scheme"),
+			snacks.lazy("<leader>sh", function()
+				require("snacks").picker.help()
+			end, "Help pages"),
+			snacks.lazy("<leader>cf", function()
+				Snacks.picker.files({ cwd = vim.fn.stdpath("config") })
+			end, "Find config file"),
+			snacks.lazy("<leader>cg", function()
+				Snacks.picker.grep({ cwd = vim.fn.stdpath("config") })
+			end, "Grep config files"),
+			snacks.lazy("<leader>sk", "<cmd>Keymaps<cr>", "Inspect keymap ownership"),
 
 			-- explorer
-			{
-				"<leader>e",
-				function()
-					Snacks.explorer()
-				end,
-				desc = "File Explorer",
-			},
+			snacks.lazy("<leader>e", function()
+				Snacks.explorer()
+			end, "File Explorer"),
 			-- # git
 			-- git
-			{
-				"<leader>gb",
-				function()
-					require("snacks").git.blame_line()
-				end,
-				desc = "git blame (line)",
-			},
-			{
-				"<leader>gl",
-				function()
-					Snacks.picker.git_log()
-				end,
-				desc = "Git Log",
-			},
-			{
-				"<leader>gs",
-				function()
-					Snacks.picker.git_status()
-				end,
-				desc = "Git Status",
-			},
+			snacks.lazy("<leader>gb", function()
+				require("snacks").git.blame_line()
+			end, "git blame (line)"),
+			snacks.lazy("<leader>gl", function()
+				Snacks.picker.git_log()
+			end, "Git Log"),
+			snacks.lazy("<leader>gs", function()
+				Snacks.picker.git_status()
+			end, "Git Status"),
 
-			-- lazygit (only when installed)
-			{
-				"<leader>gg",
-				function()
-					require("snacks").lazygit()
-				end,
-				desc = "Lazygit",
-			},
+			-- lazygit with Neogit fallback
+			git_ui.lazy("<leader>gg", git_ui_action, "Git UI"),
 			-- utility
-			{
-				"<leader>rN",
-				function()
-					require("snacks").rename.rename_file()
-				end,
-				desc = "Fast Rename Current File",
-			},
-			{
-				"<leader>z",
-				function()
-					Snacks.zen()
-				end,
-				desc = "Toggle Zen Mode",
-			},
+			snacks.lazy("<leader>rN", function()
+				require("snacks").rename.rename_file()
+			end, "Fast Rename Current File"),
+			snacks.lazy("<leader>z", function()
+				Snacks.zen()
+			end, "Toggle Zen Mode"),
 		},
 	},
 	-- Neovim setup for init.lua and plugin development with full signature help, docs and completion for the nvim lua API.
@@ -204,37 +140,6 @@ return {
 			sticky = true,
 			---Lines to be ignored while (un)comment
 			ignore = nil,
-			---LHS of toggle mappings in NORMAL mode
-			toggler = {
-				---Line-comment toggle keymap
-				line = "gcc",
-				---Block-comment toggle keymap
-				block = "gbc",
-			},
-			---LHS of operator-pending mappings in NORMAL and VISUAL mode
-			opleader = {
-				---Line-comment keymap
-				line = "gc",
-				---Block-comment keymap
-				block = "gb",
-			},
-			---LHS of extra mappings
-			extra = {
-				---Add comment on the line above
-				above = "gcO",
-				---Add comment on the line below
-				below = "gco",
-				---Add comment at the end of line
-				eol = "gcA",
-			},
-			---Enable keybindings
-			---NOTE: If given `false` then the plugin won't create any mappings
-			mappings = {
-				---Operator-pending mapping; `gcc` `gbc` `gc[count]{motion}` `gb[count]{motion}`
-				basic = true,
-				---Extra mapping; `gco`, `gcO`, `gcA`
-				extra = true,
-			},
 		},
 	},
 	{

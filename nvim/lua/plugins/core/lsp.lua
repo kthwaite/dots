@@ -1,3 +1,27 @@
+local lsp = require("core.keymaps").owner("lsp")
+local lsp_scope = { lsp = {} }
+
+lsp.eager("gD", vim.lsp.buf.declaration, "Go to declaration", { scope = lsp_scope })
+lsp.eager("gd", vim.lsp.buf.definition, "Go to definition", { scope = lsp_scope })
+lsp.eager("K", vim.lsp.buf.hover, "Hover documentation", { scope = lsp_scope })
+lsp.eager("gi", vim.lsp.buf.implementation, "Go to implementation", { scope = lsp_scope })
+lsp.eager("<space>wl", function()
+	print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+end, "List workspace folders", { scope = lsp_scope })
+lsp.eager("<space>D", vim.lsp.buf.type_definition, "Go to type definition", { scope = lsp_scope })
+lsp.eager("<space>rn", vim.lsp.buf.rename, "Rename symbol", { scope = lsp_scope })
+lsp.eager("<space>ca", vim.lsp.buf.code_action, "Code action", { scope = lsp_scope })
+lsp.eager("gr", vim.lsp.buf.references, "List references to symbol", { scope = lsp_scope })
+lsp.eager("[d", function()
+	vim.diagnostic.jump({ count = -1, float = true })
+end, "Previous diagnostic", { scope = lsp_scope })
+lsp.eager("]d", function()
+	vim.diagnostic.jump({ count = 1, float = true })
+end, "Next diagnostic", { scope = lsp_scope })
+lsp.eager("<space>f", function()
+	vim.lsp.buf.format({ async = true })
+end, "Format buffer", { scope = lsp_scope })
+
 local function configure_diagnostics()
 	vim.diagnostic.config({
 		virtual_text = {
@@ -49,37 +73,6 @@ local function register_lsp_attach()
 		callback = function(event)
 			local client = vim.lsp.get_client_by_id(event.data.client_id)
 			local bufnr = event.buf
-
-			local function map(key, operation, description)
-				vim.keymap.set("n", key, operation, {
-					buffer = bufnr,
-					desc = description or "",
-					noremap = true,
-					silent = true,
-				})
-			end
-
-			map("gD", vim.lsp.buf.declaration, "Go to declaration")
-			map("gd", vim.lsp.buf.definition, "Go to definition")
-			map("K", vim.lsp.buf.hover, "Hover documentation")
-			map("gi", vim.lsp.buf.implementation, "Go to implementation")
-			map("<space>wl", function()
-				print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-			end, "List workspace folders")
-			map("<space>D", vim.lsp.buf.type_definition, "Go to type definition")
-			map("<space>rn", vim.lsp.buf.rename, "Rename symbol")
-			map("<space>ca", vim.lsp.buf.code_action, "Code action")
-			map("gr", vim.lsp.buf.references, "List references to symbol")
-			map("[d", function()
-				vim.diagnostic.jump({ count = -1, float = true })
-			end, "Previous diagnostic")
-			map("]d", function()
-				vim.diagnostic.jump({ count = 1, float = true })
-			end, "Next diagnostic")
-			map("<space>f", function()
-				vim.lsp.buf.format({ async = true })
-			end, "Format buffer")
-
 			local ok, navic = pcall(require, "nvim-navic")
 			if ok and client ~= nil and client.server_capabilities.documentSymbolProvider then
 				navic.attach(client, bufnr)

@@ -26,7 +26,6 @@ Leader key is `<Space>`.
 |------|-----|--------|
 | n | `<leader>st` | Open terminal (bottom) |
 | n | `<leader>vt` | Open terminal (vertical) |
-| n | `<leader>sl/sh/sj/sk` | Navigate splits |
 
 ### Tabs & Buffers
 
@@ -69,8 +68,10 @@ Leader key is `<Space>`.
 | n | `<leader>cg` | Grep config files |
 | n | `<leader>th` | Pick colorscheme |
 | n | `<leader>sh` | Help pages |
-| n | `<leader>sk` | Keymaps |
+| n | `<leader>sk` | Keymap ownership |
 | n | `<leader>e` | File explorer |
+
+Run `:Keymaps` to open the same keymap ownership picker.
 
 ### Git
 
@@ -79,7 +80,7 @@ Leader key is `<Space>`.
 | n | `<leader>gb` | Git blame (line) |
 | n | `<leader>gl` | Git log |
 | n | `<leader>gs` | Git status |
-| n | `<leader>gg` | Lazygit |
+| n | `<leader>gg` | Git UI (lazygit preferred; Neogit fallback) |
 | n | `]c` / `[c` | Next/prev hunk |
 | n/v | `<leader>hs` | Stage hunk |
 | n/v | `<leader>hr` | Reset hunk |
