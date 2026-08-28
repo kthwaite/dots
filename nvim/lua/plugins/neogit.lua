@@ -1,5 +1,6 @@
+local git_ui = require("core.external_tools").git_ui()
 local neogit = require("core.keymaps").owner("neogit")
-local enabled = not vim.g.has_lazygit
+local enabled = git_ui == "neogit"
 local keys
 if enabled then
 	keys = {

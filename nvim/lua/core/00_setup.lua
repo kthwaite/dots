@@ -1,3 +1,5 @@
+require("core.external_tools").capture()
+
 -- ==== Prelims
 local keymaps = require("core.keymaps")
 local editing = keymaps.owner("editing")
@@ -12,7 +14,6 @@ vim.g.loaded_perl_provider = 0 -- disable perl provider
 vim.g.have_nerd_font = true -- enable nerd font by default
 vim.g.mapleader = " " -- map leader to space
 vim.g.localleader = " " -- map localleader to space
-vim.g.has_lazygit = vim.fn.executable("lazygit") == 1 -- capture Git UI capability once at startup
 vim.opt.shell = "zsh -l" -- use zsh as default shell
 vim.opt.termguicolors = true -- enable true color
 vim.opt.encoding = "utf-8" -- default encoding is utf-8

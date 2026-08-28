@@ -1,13 +1,13 @@
 local M = {}
+local external_tools = require("core.external_tools")
 
--- External tools that enhance the development experience
-local external_tools = {
-	{ cmd = "lazygit", name = "lazygit", hint = "Git TUI (brew install lazygit)" },
-	{ cmd = "uv", name = "uv", hint = "Python package manager (brew install uv)" },
-	{ cmd = "bun", name = "bun", hint = "JS runtime/bundler (brew install bun)" },
-	{ cmd = "rg", name = "ripgrep", hint = "Fast grep (brew install ripgrep)" },
-	{ cmd = "fd", name = "fd", hint = "Fast find (brew install fd)" },
-	{ cmd = "delta", name = "delta", hint = "Git diff pager (brew install git-delta)" },
+local tool_presentation = {
+	lazygit = { label = "lazygit", hint = "Git TUI (brew install lazygit)" },
+	uv = { label = "uv", hint = "Python package manager (brew install uv)" },
+	bun = { label = "bun", hint = "JS runtime/bundler (brew install bun)" },
+	rg = { label = "ripgrep", hint = "Fast grep (brew install ripgrep)" },
+	fd = { label = "fd", hint = "Fast find (brew install fd)" },
+	delta = { label = "delta", hint = "Git diff pager (brew install git-delta)" },
 }
 
 -- Helper function to count the number of buffers attached to a given LSP client
@@ -23,12 +23,12 @@ end
 
 M.check = function()
 	vim.health.start("k6e")
-	local ok_util, util = pcall(require, "core.utility")
-	if not ok_util then
-		vim.health.error("require('core.utility') failed")
-		return
+	local version = vim.version()
+	local version_line = "UNKNOWN"
+	if version ~= nil then
+		version_line = ("v%d.%d.%d"):format(version.major, version.minor, version.patch)
 	end
-	vim.health.info("NVIM version " .. util.version_string())
+	vim.health.info("NVIM version " .. version_line)
 	local uv = vim.uv or vim.loop
 	vim.health.info("System Information: " .. vim.inspect(uv.os_uname()))
 
@@ -70,11 +70,12 @@ M.check = function()
 
 	-- Check external tools
 	vim.health.start("k6e: external tools")
-	for _, tool in ipairs(external_tools) do
-		if vim.fn.executable(tool.cmd) == 1 then
-			vim.health.ok(tool.name .. " found")
+	for _, status in ipairs(external_tools.statuses()) do
+		local presentation = tool_presentation[status.name]
+		if status.available then
+			vim.health.ok(presentation.label .. " found")
 		else
-			vim.health.warn(tool.name .. " not found - " .. tool.hint)
+			vim.health.warn(presentation.label .. " not found - " .. presentation.hint)
 		end
 	end
 end
