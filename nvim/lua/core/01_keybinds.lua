@@ -1,5 +1,4 @@
-local util = require("core.utility")
-local au = util.au
+local section_header = require("core.section_header")
 local keymaps = require("core.keymaps")
 local buffers = keymaps.owner("buffers")
 local editing = keymaps.owner("editing")
@@ -15,9 +14,13 @@ local terminal = keymaps.owner("terminal")
 
 -- highlight text on yank
 local util_group = vim.api.nvim_create_augroup("k6e_util", { clear = true })
-au("TextYankPost", "*", function()
-	vim.highlight.on_yank({ higroup = "IncSearch", timeout = 350 })
-end, { group = util_group })
+vim.api.nvim_create_autocmd("TextYankPost", {
+	pattern = "*",
+	callback = function()
+		vim.highlight.on_yank({ higroup = "IncSearch", timeout = 350 })
+	end,
+	group = util_group,
+})
 
 -- vertical help
 local help_group = vim.api.nvim_create_augroup("k6e_help", { clear = true })
@@ -103,7 +106,7 @@ buffers.eager("<leader>Bd", function()
 end, "Close all hidden buffers.", { silent = false })
 
 -- # section headers
-editing.eager("<leader>ih", util.insert_section_header, "Insert section header comment", { silent = false })
+editing.eager("<leader>ih", section_header.insert, "Insert section header comment", { silent = false })
 
 -- ## Plugins ##
 
