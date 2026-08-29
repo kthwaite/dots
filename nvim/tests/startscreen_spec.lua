@@ -564,7 +564,88 @@ with_scratch(function(buffer)
 		error(err)
 	end
 	equal(commands, { "<cmd>ene <CR><Ignore>", "<cmd>q <CR><Ignore>" }, "New file or Quit command changed")
+
 end)
+
+local child = vim.fn.jobstart({ vim.v.progpath, "--headless", "--embed", "-u", "NONE" }, { rpc = true })
+truthy(child > 0, "failed to start embedded Neovim for mapping behavior")
+local child_tmp = vim.uv.fs_realpath("/tmp") or "/tmp"
+local child_ok, child_err = xpcall(function()
+	vim.rpcrequest(child, "nvim_exec_lua", [[
+		local root = ...
+		vim.opt.runtimepath:prepend(root)
+		package.path = table.concat({
+			root .. "/lua/?.lua",
+			root .. "/lua/?/init.lua",
+			package.path,
+		}, ";")
+		package.loaded["plugins.headers.venus"] = {
+			render = function()
+				return { type = "text", val = "VENUS" }
+			end,
+		}
+
+		local startscreen = require("k6e.startscreen")
+		local cwd = "/tmp/startscreen-project"
+		startscreen._test.oldfiles = function()
+			return {
+				"/tmp/startscreen-global.txt",
+				cwd .. "/a.lua",
+				cwd .. "/b.lua",
+			}
+		end
+		startscreen._test.filereadable = function()
+			return true
+		end
+		startscreen._test.getcwd = function()
+			return cwd
+		end
+		startscreen._test.fnamemodify = function(path)
+			return path
+		end
+		startscreen._test.load_icon_provider = function()
+			return nil
+		end
+		vim.o.timeoutlen = 200
+		startscreen.setup()
+		startscreen.start(false)
+		_G.restart_startscreen_mapping_test = function()
+			vim.cmd("enew")
+			startscreen.start(false)
+		end
+	]], { root })
+
+	local function child_buffer_is(path)
+		return vim.rpcrequest(child, "nvim_buf_get_name", 0) == path
+	end
+
+	vim.rpcnotify(child, "nvim_input", "1")
+	vim.wait(5)
+	vim.rpcnotify(child, "nvim_input", "0")
+	local selected_global = vim.wait(500, function()
+		return child_buffer_is(child_tmp .. "/startscreen-global.txt")
+	end, 5)
+	truthy(
+		selected_global,
+		"separate user inputs 1 then 0 selected " .. vim.rpcrequest(child, "nvim_buf_get_name", 0)
+			.. " instead of global MRU item 10"
+	)
+
+	vim.rpcrequest(child, "nvim_exec_lua", "_G.restart_startscreen_mapping_test()", {})
+	vim.rpcnotify(child, "nvim_input", "1")
+	local selected_cwd = vim.wait(500, function()
+		return child_buffer_is("/tmp/startscreen-project/b.lua")
+	end, 5)
+	truthy(
+		selected_cwd,
+		"lone user input 1 selected " .. vim.rpcrequest(child, "nvim_buf_get_name", 0)
+			.. " instead of cwd MRU item 1 after mapping timeout"
+	)
+end, debug.traceback)
+vim.fn.jobstop(child)
+if not child_ok then
+	error(child_err)
+end
 
 local provider_attempts = {}
 configure_production_adapters(function(name)

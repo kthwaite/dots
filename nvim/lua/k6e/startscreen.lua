@@ -435,7 +435,7 @@ local function install_mappings(state, buttons)
 		if type(shortcut) == "string" and shortcut ~= "" and not mapped[shortcut] then
 			vim.keymap.set("n", shortcut, function()
 				invoke(button.action)
-			end, { buffer = state.buffer, nowait = true, silent = true })
+			end, { buffer = state.buffer, silent = true })
 			state.mappings[#state.mappings + 1] = shortcut
 			mapped[shortcut] = true
 		end
