@@ -564,14 +564,16 @@ with_scratch(function(buffer)
 		error(err)
 	end
 	equal(commands, { "<cmd>ene <CR><Ignore>", "<cmd>q <CR><Ignore>" }, "New file or Quit command changed")
-
 end)
 
 local child = vim.fn.jobstart({ vim.v.progpath, "--headless", "--embed", "-u", "NONE" }, { rpc = true })
 truthy(child > 0, "failed to start embedded Neovim for mapping behavior")
 local child_tmp = vim.uv.fs_realpath("/tmp") or "/tmp"
 local child_ok, child_err = xpcall(function()
-	vim.rpcrequest(child, "nvim_exec_lua", [[
+	vim.rpcrequest(
+		child,
+		"nvim_exec_lua",
+		[[
 		local root = ...
 		vim.opt.runtimepath:prepend(root)
 		package.path = table.concat({
@@ -613,7 +615,9 @@ local child_ok, child_err = xpcall(function()
 			vim.cmd("enew")
 			startscreen.start(false)
 		end
-	]], { root })
+	]],
+		{ root }
+	)
 
 	local function child_buffer_is(path)
 		return vim.rpcrequest(child, "nvim_buf_get_name", 0) == path
@@ -627,7 +631,8 @@ local child_ok, child_err = xpcall(function()
 	end, 5)
 	truthy(
 		selected_global,
-		"separate user inputs 1 then 0 selected " .. vim.rpcrequest(child, "nvim_buf_get_name", 0)
+		"separate user inputs 1 then 0 selected "
+			.. vim.rpcrequest(child, "nvim_buf_get_name", 0)
 			.. " instead of global MRU item 10"
 	)
 
@@ -638,7 +643,8 @@ local child_ok, child_err = xpcall(function()
 	end, 5)
 	truthy(
 		selected_cwd,
-		"lone user input 1 selected " .. vim.rpcrequest(child, "nvim_buf_get_name", 0)
+		"lone user input 1 selected "
+			.. vim.rpcrequest(child, "nvim_buf_get_name", 0)
 			.. " instead of cwd MRU item 1 after mapping timeout"
 	)
 end, debug.traceback)

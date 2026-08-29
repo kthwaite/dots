@@ -197,8 +197,7 @@ local function mru_buttons(start, cwd)
 	local buttons = {}
 	local modifier = cwd and ":." or ":~"
 	for index, path in ipairs(mru_paths(cwd)) do
-		buttons[#buttons + 1] =
-			file_button(path, tostring(index + start - 1), M._test.fnamemodify(path, modifier))
+		buttons[#buttons + 1] = file_button(path, tostring(index + start - 1), M._test.fnamemodify(path, modifier))
 	end
 	return {
 		type = "group",
