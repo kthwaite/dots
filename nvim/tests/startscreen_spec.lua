@@ -21,8 +21,10 @@ end
 
 local fixture
 local action_count = 0
+local render_count = 0
 package.loaded["plugins.headers.venus"] = {
 	render = function()
+		render_count = render_count + 1
 		return fixture
 	end,
 }
@@ -34,7 +36,11 @@ local function delete_augroup()
 end
 
 local function with_scratch(callback)
+	local existing_buffers = {}
 	local listed_buffers = {}
+	for _, existing_buffer in ipairs(vim.api.nvim_list_bufs()) do
+		existing_buffers[existing_buffer] = true
+	end
 	for _, existing_window in ipairs(vim.api.nvim_list_wins()) do
 		local existing_buffer = vim.api.nvim_win_get_buf(existing_window)
 		if vim.bo[existing_buffer].buflisted then
@@ -54,8 +60,13 @@ local function with_scratch(callback)
 	end, debug.traceback)
 
 	if vim.api.nvim_tabpage_is_valid(tab) then
-		vim.api.nvim_set_current_tabpage(tab)
-		vim.cmd("tabclose!")
+		pcall(vim.api.nvim_set_current_tabpage, tab)
+		pcall(vim.cmd, "tabclose!")
+	end
+	for _, case_buffer in ipairs(vim.api.nvim_list_bufs()) do
+		if not existing_buffers[case_buffer] and vim.api.nvim_buf_is_valid(case_buffer) then
+			pcall(vim.api.nvim_buf_delete, case_buffer, { force = true })
+		end
 	end
 	for listed_buffer in pairs(listed_buffers) do
 		if vim.api.nvim_buf_is_valid(listed_buffer) then
@@ -201,7 +212,7 @@ with_scratch(function(buffer)
 				on_press = function()
 					action_count = action_count + 10
 				end,
-				opts = { shortcut = "s" },
+				opts = { shortcut = "s", hl = "Identifier" },
 			},
 			{
 				type = "button",
@@ -213,7 +224,20 @@ with_scratch(function(buffer)
 			},
 		},
 	}
-	startscreen.redraw()
+	local original_set_lines = vim.api.nvim_buf_set_lines
+	local target_mutations = 0
+	vim.api.nvim_buf_set_lines = function(target, ...)
+		if target == buffer then
+			target_mutations = target_mutations + 1
+		end
+		return original_set_lines(target, ...)
+	end
+	local ok, err = xpcall(startscreen.redraw, debug.traceback)
+	vim.api.nvim_buf_set_lines = original_set_lines
+	if not ok then
+		error(err)
+	end
+	equal(target_mutations, 1, "redraw did not use exactly one target-buffer line mutation")
 	vim.api.nvim_feedkeys("r", "x", false)
 	equal(action_count, 0, "redraw left a stale button shortcut")
 	vim.api.nvim_feedkeys("s", "x", false)
@@ -222,6 +246,15 @@ with_scratch(function(buffer)
 	equal(action_count, 11, "button shortcuts invoked the wrong configured action")
 	local text = table.concat(vim.api.nvim_buf_get_lines(buffer, 0, -1, false), "\n")
 	equal(text:match("save\nopen$"), "save\nopen", "redraw did not rebuild layout")
+
+	local extmarks = vim.api.nvim_buf_get_extmarks(buffer, -1, 0, -1, { details = true })
+	local highlight_groups = {}
+	for _, mark in ipairs(extmarks) do
+		if mark[4].hl_group then
+			highlight_groups[#highlight_groups + 1] = mark[4].hl_group
+		end
+	end
+	equal(highlight_groups, { "Identifier" }, "redraw retained stale namespace highlights")
 end)
 
 local original_argc = vim.fn.argc
@@ -305,6 +338,37 @@ with_scratch(function(buffer)
 end)
 
 fixture = default_fixture()
+with_scratch(function()
+	startscreen.setup()
+	local nested_calls = 0
+	local probe = vim.api.nvim_create_augroup("k6e-startscreen-nested-probe", { clear = true })
+	vim.api.nvim_create_autocmd("FileType", {
+		group = probe,
+		pattern = "k6e-startscreen",
+		callback = function()
+			nested_calls = nested_calls + 1
+		end,
+	})
+	local ok, err = xpcall(function()
+		with_startup_inputs(0, { "nvim" }, function()
+			vim.api.nvim_exec_autocmds("VimEnter", {})
+		end)
+	end, debug.traceback)
+	vim.api.nvim_del_augroup_by_id(probe)
+	if not ok then
+		error(err)
+	end
+	equal(nested_calls, 1, "VimEnter autocmd did not permit nested FileType behavior")
+end)
+
+local dynamic_count = 0
+fixture = {
+	type = "group",
+	val = function()
+		dynamic_count = dynamic_count + 1
+		return { { type = "text", val = ("dynamic-%d"):format(dynamic_count) } }
+	end,
+}
 with_scratch(function(buffer)
 	startscreen.setup()
 	startscreen.setup()
@@ -321,8 +385,20 @@ with_scratch(function(buffer)
 	end
 	equal(actual_events, expected_events, "setup was not idempotent")
 
+	render_count = 0
+	dynamic_count = 0
 	startscreen.start(false)
+	equal({ render_count, dynamic_count }, { 1, 1 }, "initial dynamic layout was not built once")
+
+	vim.api.nvim_exec_autocmds("VimResized", {})
+	equal({ render_count, dynamic_count }, { 2, 2 }, "VimResized did not redraw and rebuild dynamic layout")
+
+	vim.api.nvim_exec_autocmds("DirChanged", {})
+	equal({ render_count, dynamic_count }, { 3, 3 }, "DirChanged did not rebuild dynamic layout and redraw")
+
 	vim.api.nvim_buf_delete(buffer, { force = true })
+	render_count = 0
 	local ok, err = pcall(startscreen.redraw)
 	truthy(ok, "redraw retained wiped startscreen state: " .. tostring(err))
+	equal(render_count, 0, "redraw rendered state after its startscreen buffer was wiped")
 end)

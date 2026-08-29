@@ -341,9 +341,13 @@ function M.start(on_vimenter)
 end
 
 function M.redraw()
-	for _, state in pairs(states) do
-		state.layout = venus.render()
-		draw(state)
+	for buffer, state in pairs(states) do
+		if vim.api.nvim_buf_is_valid(buffer) then
+			state.layout = venus.render()
+			draw(state)
+		else
+			states[buffer] = nil
+		end
 	end
 end
 
