@@ -398,7 +398,17 @@ with_scratch(function(buffer)
 
 	vim.api.nvim_buf_delete(buffer, { force = true })
 	render_count = 0
-	local ok, err = pcall(startscreen.redraw)
+	local original_buf_is_valid = vim.api.nvim_buf_is_valid
+	local wiped_buffer_checks = 0
+	vim.api.nvim_buf_is_valid = function(target)
+		if target == buffer then
+			wiped_buffer_checks = wiped_buffer_checks + 1
+		end
+		return original_buf_is_valid(target)
+	end
+	local ok, err = xpcall(startscreen.redraw, debug.traceback)
+	vim.api.nvim_buf_is_valid = original_buf_is_valid
 	truthy(ok, "redraw retained wiped startscreen state: " .. tostring(err))
+	equal(wiped_buffer_checks, 0, "redraw still inspected state for a wiped startscreen buffer")
 	equal(render_count, 0, "redraw rendered state after its startscreen buffer was wiped")
 end)
