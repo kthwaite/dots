@@ -1,5 +1,3 @@
-local au = require("core.utility").au
-
 -- # helm filetype
 vim.filetype.add({
 	filename = {
@@ -15,7 +13,12 @@ vim.filetype.add({
 	},
 })
 -- Use {{/* */}} as comments
-au("FileType", "helm", "setlocal commentstring={{/* %s */}}")
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = "helm",
+	callback = function()
+		vim.opt_local.commentstring = "{{/* %s */}}"
+	end,
+})
 
 -- # falls filetype
 vim.filetype.add({ extension = { fall = "falls" } })
