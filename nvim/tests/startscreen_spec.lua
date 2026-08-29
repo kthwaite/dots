@@ -412,3 +412,204 @@ with_scratch(function(buffer)
 	equal(wiped_buffer_checks, 0, "redraw still inspected state for a wiped startscreen buffer")
 	equal(render_count, 0, "redraw rendered state after its startscreen buffer was wiped")
 end)
+
+local cwd = "/home/test/project"
+local oldfiles = {
+	"/home/test/outside.txt",
+	cwd .. "/src/a.lua",
+	cwd .. "/COMMIT_EDITMSG",
+	cwd .. "/src/missing.lua",
+	cwd .. "/src/a.lua",
+	cwd .. "/src/b.lua",
+	cwd .. "/src/rebase.gitcommit",
+	cwd .. "/src/c.lua",
+	cwd .. "/src/d.lua",
+	cwd .. "/src/e.lua",
+	cwd .. "/src/f.lua",
+	cwd .. "/src/g.lua",
+	cwd .. "/src/h.lua",
+	cwd .. "/src/i.lua",
+	cwd .. "/src/j.lua",
+	cwd .. "/src/k.lua",
+}
+
+local function configure_production_adapters(load_icon_provider, oldfiles_adapter)
+	startscreen._test.oldfiles = oldfiles_adapter or function()
+		return oldfiles
+	end
+	startscreen._test.filereadable = function(path)
+		return path ~= cwd .. "/src/missing.lua"
+	end
+	startscreen._test.getcwd = function()
+		return cwd
+	end
+	startscreen._test.fnamemodify = function(path, modifier)
+		if modifier == ":~" then
+			return path:gsub("^/home/test", "~")
+		end
+		if modifier == ":." then
+			return path:gsub("^" .. vim.pesc(cwd .. "/"), "")
+		end
+		error("unexpected modifier: " .. modifier)
+	end
+	startscreen._test.load_icon_provider = load_icon_provider
+	startscreen.setup()
+	vim.api.nvim_exec_autocmds("DirChanged", {})
+end
+
+local function nonempty_lines(buffer)
+	local result = {}
+	for _, line in ipairs(vim.api.nvim_buf_get_lines(buffer, 0, -1, false)) do
+		line = vim.trim(line)
+		if line ~= "" then
+			result[#result + 1] = line
+		end
+	end
+	return result
+end
+
+local function row_highlights(buffer, text)
+	local row
+	local left
+	for index, line in ipairs(vim.api.nvim_buf_get_lines(buffer, 0, -1, false)) do
+		local column = line:find(text, 1, true)
+		if column then
+			row = index - 1
+			left = column - 1
+			break
+		end
+	end
+	truthy(row ~= nil, "missing rendered row: " .. text)
+
+	local result = {}
+	for _, mark in ipairs(vim.api.nvim_buf_get_extmarks(buffer, -1, { row, 0 }, { row, -1 }, { details = true })) do
+		if mark[4].hl_group then
+			result[#result + 1] = {
+				group = mark[4].hl_group,
+				start_col = mark[3] - left,
+				end_col = mark[4].end_col - left,
+			}
+		end
+	end
+	table.sort(result, function(left_mark, right_mark)
+		return left_mark.start_col < right_mark.start_col
+	end)
+	return result
+end
+
+fixture = { type = "text", val = "VENUS" }
+configure_production_adapters(function(name)
+	if name == "mini.icons" then
+		return {
+			get = function()
+				return "M", "MiniIcon"
+			end,
+		}
+	end
+end)
+with_scratch(function(buffer)
+	startscreen.setup()
+	startscreen.start(false)
+
+	local version = vim.version()
+	equal(nonempty_lines(buffer), {
+		"VENUS",
+		("NVIM v%d.%d.%d"):format(version.major, version.minor, version.patch),
+		"[e] New file",
+		"MRU",
+		"[10] M  ~/outside.txt",
+		"[11] M  ~/project/src/a.lua",
+		"[12] M  ~/project/src/b.lua",
+		"[13] M  ~/project/src/c.lua",
+		"[14] M  ~/project/src/d.lua",
+		"[15] M  ~/project/src/e.lua",
+		"[16] M  ~/project/src/f.lua",
+		"[17] M  ~/project/src/g.lua",
+		"[18] M  ~/project/src/h.lua",
+		"[19] M  ~/project/src/i.lua",
+		"MRU ~/project",
+		"[0] M  src/a.lua",
+		"[1] M  src/b.lua",
+		"[2] M  src/c.lua",
+		"[3] M  src/d.lua",
+		"[4] M  src/e.lua",
+		"[5] M  src/f.lua",
+		"[6] M  src/g.lua",
+		"[7] M  src/h.lua",
+		"[8] M  src/i.lua",
+		"[9] M  src/j.lua",
+		"[q] Quit",
+	}, "production layout, filtering, numbering, shortening, or section limits changed")
+
+	equal(row_highlights(buffer, "[11] M  ~/project/src/a.lua"), {
+		{ group = "Operator", start_col = 0, end_col = 1 },
+		{ group = "Number", start_col = 1, end_col = 3 },
+		{ group = "Operator", start_col = 3, end_col = 4 },
+		{ group = "MiniIcon", start_col = 5, end_col = 6 },
+		{ group = "Comment", start_col = 8, end_col = 22 },
+	}, "file button shortcut, icon, or directory highlights changed")
+
+	local commands = {}
+	local original_replace_termcodes = vim.api.nvim_replace_termcodes
+	vim.api.nvim_replace_termcodes = function(keys)
+		commands[#commands + 1] = keys
+		return ""
+	end
+	local ok, err = xpcall(function()
+		vim.api.nvim_feedkeys("e", "x", false)
+		vim.api.nvim_feedkeys("q", "x", false)
+	end, debug.traceback)
+	vim.api.nvim_replace_termcodes = original_replace_termcodes
+	if not ok then
+		error(err)
+	end
+	equal(commands, { "<cmd>ene <CR><Ignore>", "<cmd>q <CR><Ignore>" }, "New file or Quit command changed")
+end)
+
+local provider_attempts = {}
+configure_production_adapters(function(name)
+	provider_attempts[#provider_attempts + 1] = name
+	if name == "nvim-web-devicons" then
+		return {
+			get_icon = function()
+				return "D", "DevIcon"
+			end,
+		}
+	end
+end, function()
+	return { "/home/test/outside.txt" }
+end)
+with_scratch(function(buffer)
+	startscreen.start(false)
+	equal(provider_attempts, { "mini.icons", "nvim-web-devicons" }, "icon provider fallback order changed")
+	truthy(vim.tbl_contains(nonempty_lines(buffer), "[10] D  ~/outside.txt"), "devicons fallback did not render")
+end)
+
+configure_production_adapters(function()
+	return nil
+end, function()
+	return { "/home/test/outside.txt" }
+end)
+with_scratch(function(buffer)
+	startscreen.start(false)
+	truthy(
+		vim.tbl_contains(nonempty_lines(buffer), "[10] ~/outside.txt"),
+		"missing icon providers removed or padded the MRU entry"
+	)
+end)
+
+local oldfiles_calls = 0
+configure_production_adapters(function()
+	return nil
+end, function()
+	oldfiles_calls = oldfiles_calls + 1
+	return { "/home/test/outside.txt", cwd .. "/src/a.lua" }
+end)
+with_scratch(function()
+	startscreen.start(false)
+	equal(oldfiles_calls, 2, "initial global and cwd MRU lists were not built")
+	startscreen.redraw()
+	equal(oldfiles_calls, 2, "redraw did not reuse the MRU cache")
+	vim.api.nvim_exec_autocmds("DirChanged", {})
+	equal(oldfiles_calls, 4, "DirChanged did not invalidate both MRU cache entries before redraw")
+end)

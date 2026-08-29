@@ -1,6 +1,30 @@
 local venus = require("plugins.headers.venus")
 
 local M = {}
+local mru_cache = {}
+local mru_sources = {}
+local icon_providers = {
+	loader = nil,
+	mini = nil,
+	devicons = nil,
+}
+
+M._test = {
+	oldfiles = function()
+		return vim.v.oldfiles or {}
+	end,
+	filereadable = function(path)
+		return vim.fn.filereadable(path) == 1
+	end,
+	getcwd = vim.fn.getcwd,
+	fnamemodify = vim.fn.fnamemodify,
+	load_icon_provider = function(name)
+		local ok, provider = pcall(require, name)
+		if ok then
+			return provider
+		end
+	end,
+}
 
 local namespace = vim.api.nvim_create_namespace("k6e-startscreen")
 local states = {}
@@ -8,6 +32,234 @@ local states = {}
 local function starts_with(value, prefix)
 	return value:sub(1, #prefix) == prefix
 end
+
+local function version_string()
+	local version = vim.version()
+	if version == nil then
+		return "UNKNOWN"
+	end
+	return ("v%d.%d.%d"):format(version.major, version.minor, version.patch)
+end
+
+local function extension(path)
+	local basename = path:match("[^/\\]+$") or path
+	return basename:match("^.+%.(.+)$") or ""
+end
+
+local function ignored_mru_path(path)
+	return path:find("COMMIT_EDITMSG", 1, true) ~= nil or extension(path) == "gitcommit"
+end
+
+local function inside_cwd(path, cwd)
+	if path == cwd then
+		return true
+	end
+	local separator = cwd:sub(-1) == "/" and "" or "/"
+	return starts_with(path, cwd .. separator)
+end
+
+local function mru_paths(cwd)
+	if mru_sources.oldfiles ~= M._test.oldfiles or mru_sources.filereadable ~= M._test.filereadable then
+		mru_cache = {}
+		mru_sources.oldfiles = M._test.oldfiles
+		mru_sources.filereadable = M._test.filereadable
+	end
+	local key = cwd or "global"
+	if mru_cache[key] ~= nil then
+		return mru_cache[key]
+	end
+
+	local found = {}
+	local seen = {}
+	for _, path in ipairs(M._test.oldfiles()) do
+		if
+			not seen[path]
+			and (cwd == nil or inside_cwd(path, cwd))
+			and not ignored_mru_path(path)
+			and M._test.filereadable(path)
+		then
+			found[#found + 1] = path
+			seen[path] = true
+			if #found == 10 then
+				break
+			end
+		end
+	end
+	mru_cache[key] = found
+	return found
+end
+
+local function icon_provider(field, name)
+	local loader = M._test.load_icon_provider
+	if icon_providers.loader ~= loader then
+		icon_providers.loader = loader
+		icon_providers.mini = nil
+		icon_providers.devicons = nil
+	end
+	if icon_providers[field] == nil then
+		icon_providers[field] = loader(name) or false
+	end
+	return icon_providers[field]
+end
+
+local function mini_icon(provider, path)
+	if not provider then
+		return
+	end
+	local ext = extension(path)
+	local kind = ext == "" and "file" or "extension"
+	local name = ext == "" and path or ext
+	local ok, icon, highlight = pcall(provider.get, kind, name)
+	if ok and icon ~= nil and icon ~= "" then
+		return icon, highlight
+	end
+end
+
+local function devicon(provider, path)
+	if not provider then
+		return
+	end
+	local ok, icon, highlight = pcall(provider.get_icon, path, extension(path), { default = true })
+	if ok and icon ~= nil and icon ~= "" then
+		return icon, highlight
+	end
+end
+
+local function file_icon(path)
+	local icon, highlight = mini_icon(icon_provider("mini", "mini.icons"), path)
+	if icon == nil then
+		icon, highlight = devicon(icon_provider("devicons", "nvim-web-devicons"), path)
+	end
+	return icon, highlight
+end
+
+local function shortcut_highlights(shortcut)
+	return {
+		{ "Operator", 0, 1 },
+		{ "Number", 1, #shortcut + 1 },
+		{ "Operator", #shortcut + 1, #shortcut + 2 },
+	}
+end
+
+local function command_action(command)
+	return function()
+		local keys = vim.api.nvim_replace_termcodes(command .. "<Ignore>", true, false, true)
+		vim.api.nvim_feedkeys(keys, "t", false)
+	end
+end
+
+local function button(shortcut, label, command)
+	return {
+		type = "button",
+		val = ("[%s] %s"):format(shortcut, label),
+		on_press = command_action(command),
+		opts = {
+			shortcut = shortcut,
+			hl = shortcut_highlights(shortcut),
+		},
+	}
+end
+
+local function file_button(path, shortcut, short_path)
+	local shortcut_text = ("[%s] "):format(shortcut)
+	local icon, icon_highlight = file_icon(path)
+	local icon_text = icon and (icon .. "  ") or ""
+	local highlights = shortcut_highlights(shortcut)
+
+	if icon and icon_highlight then
+		highlights[#highlights + 1] = {
+			icon_highlight,
+			#shortcut_text,
+			#shortcut_text + #icon,
+		}
+	end
+	local directory = short_path:match(".*[/\\]")
+	if directory then
+		highlights[#highlights + 1] = {
+			"Comment",
+			#shortcut_text + #icon_text,
+			#shortcut_text + #icon_text + #directory,
+		}
+	end
+
+	return {
+		type = "button",
+		val = shortcut_text .. icon_text .. short_path,
+		on_press = command_action("<cmd>e " .. vim.fn.fnameescape(path) .. " <CR>"),
+		opts = {
+			shortcut = shortcut,
+			hl = highlights,
+		},
+	}
+end
+
+local function mru_buttons(start, cwd)
+	local buttons = {}
+	local modifier = cwd and ":." or ":~"
+	for index, path in ipairs(mru_paths(cwd)) do
+		buttons[#buttons + 1] =
+			file_button(path, tostring(index + start - 1), M._test.fnamemodify(path, modifier))
+	end
+	return {
+		type = "group",
+		val = buttons,
+	}
+end
+
+local function production_layout()
+	local cwd = M._test.getcwd()
+	return {
+		{ type = "padding", val = 1 },
+		venus.render(),
+		{ type = "padding", val = 1 },
+		{ type = "text", val = "NVIM " .. version_string(), opts = { position = "center" } },
+		{ type = "padding", val = 1 },
+		{
+			type = "group",
+			val = {
+				button("e", "New file", "<cmd>ene <CR>"),
+			},
+		},
+		{
+			type = "group",
+			val = {
+				{
+					type = "group",
+					val = {
+						{ type = "padding", val = 1 },
+						{ type = "text", val = "MRU", opts = { hl = "SpecialComment" } },
+						{ type = "padding", val = 1 },
+						mru_buttons(10),
+					},
+				},
+			},
+			opts = { position = "center" },
+		},
+		{
+			type = "group",
+			val = {
+				{ type = "padding", val = 1 },
+				{
+					type = "text",
+					val = "MRU " .. M._test.fnamemodify(cwd, ":~"),
+					opts = { hl = "SpecialComment" },
+				},
+				{ type = "padding", val = 1 },
+				mru_buttons(0, cwd),
+			},
+		},
+		{ type = "padding", val = 1 },
+		{
+			type = "group",
+			val = {
+				button("q", "Quit", "<cmd>q <CR>"),
+			},
+		},
+		{ type = "group", val = {} },
+	}
+end
+
+local layout_factory = venus.render
 
 local function resolve(value)
 	while type(value) == "function" do
@@ -225,7 +477,7 @@ local function draw(state)
 
 	local rendered = { lines = {}, highlights = {}, buttons = {} }
 	local width = vim.api.nvim_win_get_width(window)
-	local layout = state.layout or venus.render()
+	local layout = state.layout or layout_factory()
 	state.layout = layout
 	if layout.type ~= nil then
 		render_element(layout, nil, rendered, width)
@@ -328,14 +580,14 @@ function M.start(on_vimenter)
 		state = {
 			buffer = buffer,
 			window = window,
-			layout = venus.render(),
+			layout = layout_factory(),
 			buttons = {},
 			mappings = {},
 		}
 		states[buffer] = state
 	else
 		state.window = window
-		state.layout = venus.render()
+		state.layout = layout_factory()
 	end
 	draw(state)
 end
@@ -343,7 +595,7 @@ end
 function M.redraw()
 	for buffer, state in pairs(states) do
 		if vim.api.nvim_buf_is_valid(buffer) then
-			state.layout = venus.render()
+			state.layout = layout_factory()
 			draw(state)
 		else
 			states[buffer] = nil
@@ -352,6 +604,7 @@ function M.redraw()
 end
 
 function M.setup()
+	layout_factory = production_layout
 	local group = vim.api.nvim_create_augroup("k6e-startscreen", { clear = true })
 	vim.api.nvim_create_autocmd("VimEnter", {
 		group = group,
@@ -367,6 +620,7 @@ function M.setup()
 	vim.api.nvim_create_autocmd("DirChanged", {
 		group = group,
 		callback = function()
+			mru_cache = {}
 			for _, state in pairs(states) do
 				state.layout = nil
 			end

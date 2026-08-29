@@ -87,6 +87,7 @@ M.spec = build_spec(M.extra_plugins, M.session_plugins)
 require("lazy").setup({
 	spec = M.spec,
 })
+require("k6e.startscreen").setup()
 require("core.keymaps").activate()
 
 return M
