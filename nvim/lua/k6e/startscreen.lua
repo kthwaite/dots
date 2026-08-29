@@ -232,7 +232,6 @@ local function production_layout()
 					},
 				},
 			},
-			opts = { position = "center" },
 		},
 		{
 			type = "group",
@@ -549,6 +548,16 @@ local function should_skip_startup()
 	return false
 end
 
+local function restore_colorcolumn(state)
+	if not state.colorcolumn_hidden then
+		return
+	end
+	if vim.api.nvim_win_is_valid(state.window) then
+		pcall(vim.api.nvim_set_option_value, "colorcolumn", state.colorcolumn, { win = state.window })
+	end
+	state.colorcolumn_hidden = false
+end
+
 local function configure_buffer(buffer)
 	vim.api.nvim_set_option_value("buftype", "nofile", { buf = buffer })
 	vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buffer })
@@ -562,6 +571,7 @@ local function configure_window(window)
 	vim.api.nvim_set_option_value("relativenumber", false, { win = window })
 	vim.api.nvim_set_option_value("signcolumn", "no", { win = window })
 	vim.api.nvim_set_option_value("foldcolumn", "0", { win = window })
+	vim.api.nvim_set_option_value("colorcolumn", "", { win = window })
 end
 
 function M.start(on_vimenter)
@@ -571,9 +581,6 @@ function M.start(on_vimenter)
 
 	local buffer = vim.api.nvim_get_current_buf()
 	local window = vim.api.nvim_get_current_win()
-	configure_buffer(buffer)
-	configure_window(window)
-
 	local state = states[buffer]
 	if state == nil then
 		state = {
@@ -582,12 +589,18 @@ function M.start(on_vimenter)
 			layout = layout_factory(),
 			buttons = {},
 			mappings = {},
+			colorcolumn = vim.api.nvim_get_option_value("colorcolumn", { win = window }),
+			colorcolumn_hidden = false,
 		}
 		states[buffer] = state
 	else
 		state.window = window
 		state.layout = layout_factory()
 	end
+
+	configure_buffer(buffer)
+	configure_window(window)
+	state.colorcolumn_hidden = true
 	draw(state)
 end
 
@@ -626,10 +639,23 @@ function M.setup()
 			M.redraw()
 		end,
 	})
+	vim.api.nvim_create_autocmd("BufLeave", {
+		group = group,
+		callback = function(event)
+			local state = states[event.buf]
+			if state ~= nil then
+				restore_colorcolumn(state)
+			end
+		end,
+	})
 	vim.api.nvim_create_autocmd("BufWipeout", {
 		group = group,
 		callback = function(event)
-			states[event.buf] = nil
+			local state = states[event.buf]
+			if state ~= nil then
+				restore_colorcolumn(state)
+				states[event.buf] = nil
+			end
 		end,
 	})
 end

@@ -361,6 +361,39 @@ with_scratch(function()
 	equal(nested_calls, 1, "VimEnter autocmd did not permit nested FileType behavior")
 end)
 
+fixture = default_fixture()
+with_scratch(function(buffer, window)
+	startscreen.setup()
+	vim.wo[window].colorcolumn = "81,101"
+
+	startscreen.start(false)
+	equal(vim.wo[window].colorcolumn, "", "startscreen retained the window color column")
+
+	startscreen.start(false)
+	equal(vim.wo[window].colorcolumn, "", "startscreen re-entry changed the hidden color column")
+
+	local replacement = vim.api.nvim_create_buf(true, true)
+	vim.api.nvim_win_set_buf(window, replacement)
+	equal(vim.wo[window].colorcolumn, "81,101", "wiping the startscreen did not restore the color column")
+	equal(vim.api.nvim_buf_is_valid(buffer), false, "leaving the startscreen did not wipe its buffer")
+end)
+
+fixture = default_fixture()
+with_scratch(function(buffer, window)
+	startscreen.setup()
+	vim.wo[window].colorcolumn = "72,+1"
+	startscreen.start(false)
+	vim.bo[buffer].bufhidden = ""
+
+	local replacement = vim.api.nvim_create_buf(true, true)
+	vim.api.nvim_win_set_buf(window, replacement)
+	equal(vim.wo[window].colorcolumn, "72,+1", "leaving the startscreen did not restore the color column")
+
+	vim.wo[window].colorcolumn = "99"
+	vim.api.nvim_buf_delete(buffer, { force = true })
+	equal(vim.wo[window].colorcolumn, "99", "later startscreen cleanup restored a stale color column")
+end)
+
 local dynamic_count = 0
 fixture = {
 	type = "group",
@@ -374,6 +407,7 @@ with_scratch(function(buffer)
 	startscreen.setup()
 
 	local expected_events = {
+		BufLeave = 1,
 		BufWipeout = 1,
 		DirChanged = 1,
 		VimEnter = 1,
@@ -468,6 +502,16 @@ local function nonempty_lines(buffer)
 	return result
 end
 
+local function row_start(buffer, text)
+	for _, line in ipairs(vim.api.nvim_buf_get_lines(buffer, 0, -1, false)) do
+		local column = line:find(text, 1, true)
+		if column then
+			return column - 1
+		end
+	end
+	error("missing rendered row: " .. text)
+end
+
 local function row_highlights(buffer, text)
 	local row
 	local left
@@ -540,6 +584,13 @@ with_scratch(function(buffer)
 		"[9] M  src/j.lua",
 		"[q] Quit",
 	}, "production layout, filtering, numbering, shortening, or section limits changed")
+
+	equal({
+		row_start(buffer, "MRU"),
+		row_start(buffer, "[10] M  ~/outside.txt"),
+		row_start(buffer, "MRU ~/project"),
+		row_start(buffer, "[0] M  src/a.lua"),
+	}, { 0, 0, 0, 0 }, "global and cwd MRU sections did not share the normal left edge")
 
 	equal(row_highlights(buffer, "[11] M  ~/project/src/a.lua"), {
 		{ group = "Operator", start_col = 0, end_col = 1 },
