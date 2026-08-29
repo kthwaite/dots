@@ -389,9 +389,47 @@ with_scratch(function(buffer, window)
 	vim.api.nvim_win_set_buf(window, replacement)
 	equal(vim.wo[window].colorcolumn, "72,+1", "leaving the startscreen did not restore the color column")
 
+	vim.api.nvim_win_set_buf(window, buffer)
+	vim.wo[window].colorcolumn = "90,+3"
+	startscreen.start(false)
+	equal(vim.wo[window].colorcolumn, "", "a new startscreen lifecycle retained the replacement color column")
+
+	startscreen.redraw()
+	equal(vim.wo[window].colorcolumn, "", "redraw changed the hidden color column")
+
+	vim.bo[buffer].bufhidden = ""
+	local final_buffer = vim.api.nvim_create_buf(true, true)
+	vim.api.nvim_win_set_buf(window, final_buffer)
+	equal(vim.wo[window].colorcolumn, "90,+3", "a new startscreen lifecycle did not restore its color column")
+
 	vim.wo[window].colorcolumn = "99"
 	vim.api.nvim_buf_delete(buffer, { force = true })
 	equal(vim.wo[window].colorcolumn, "99", "later startscreen cleanup restored a stale color column")
+end)
+
+fixture = default_fixture()
+with_scratch(function(buffer, window)
+	startscreen.setup()
+	vim.wo[window].colorcolumn = "88"
+	startscreen.start(false)
+
+	vim.cmd("vsplit")
+	local remaining_window
+	for _, candidate in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+		if candidate ~= window then
+			remaining_window = candidate
+			break
+		end
+	end
+	truthy(remaining_window ~= nil, "split did not create a second startscreen window")
+	vim.api.nvim_set_current_win(remaining_window)
+	vim.api.nvim_win_close(window, true)
+	equal(vim.api.nvim_win_is_valid(window), false, "tracked startscreen window remained valid")
+
+	local ok, err = xpcall(function()
+		vim.api.nvim_buf_delete(buffer, { force = true })
+	end, debug.traceback)
+	truthy(ok, "cleanup failed after the tracked startscreen window closed: " .. tostring(err))
 end)
 
 local dynamic_count = 0

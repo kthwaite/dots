@@ -552,10 +552,26 @@ local function restore_colorcolumn(state)
 	if not state.colorcolumn_hidden then
 		return
 	end
-	if vim.api.nvim_win_is_valid(state.window) then
-		pcall(vim.api.nvim_set_option_value, "colorcolumn", state.colorcolumn, { win = state.window })
+	local window = state.colorcolumn_window
+	if window ~= nil and vim.api.nvim_win_is_valid(window) then
+		pcall(vim.api.nvim_set_option_value, "colorcolumn", state.colorcolumn, { win = window })
 	end
+	state.colorcolumn = nil
+	state.colorcolumn_window = nil
 	state.colorcolumn_hidden = false
+end
+
+local function hide_colorcolumn(state, window)
+	if state.colorcolumn_hidden then
+		if state.colorcolumn_window == window then
+			return
+		end
+		restore_colorcolumn(state)
+	end
+	state.colorcolumn = vim.api.nvim_get_option_value("colorcolumn", { win = window })
+	state.colorcolumn_window = window
+	vim.api.nvim_set_option_value("colorcolumn", "", { win = window })
+	state.colorcolumn_hidden = true
 end
 
 local function configure_buffer(buffer)
@@ -571,7 +587,6 @@ local function configure_window(window)
 	vim.api.nvim_set_option_value("relativenumber", false, { win = window })
 	vim.api.nvim_set_option_value("signcolumn", "no", { win = window })
 	vim.api.nvim_set_option_value("foldcolumn", "0", { win = window })
-	vim.api.nvim_set_option_value("colorcolumn", "", { win = window })
 end
 
 function M.start(on_vimenter)
@@ -589,7 +604,6 @@ function M.start(on_vimenter)
 			layout = layout_factory(),
 			buttons = {},
 			mappings = {},
-			colorcolumn = vim.api.nvim_get_option_value("colorcolumn", { win = window }),
 			colorcolumn_hidden = false,
 		}
 		states[buffer] = state
@@ -597,10 +611,10 @@ function M.start(on_vimenter)
 		state.window = window
 		state.layout = layout_factory()
 	end
+	hide_colorcolumn(state, window)
 
 	configure_buffer(buffer)
 	configure_window(window)
-	state.colorcolumn_hidden = true
 	draw(state)
 end
 
