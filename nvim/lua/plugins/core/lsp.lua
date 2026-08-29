@@ -1,6 +1,10 @@
 local lsp = require("core.keymaps").owner("lsp")
 local lsp_scope = { lsp = {} }
 
+-- =============================================================================
+-- LSP keymaps
+-- =============================================================================
+
 lsp.eager("gD", vim.lsp.buf.declaration, "Go to declaration", { scope = lsp_scope })
 lsp.eager("gd", vim.lsp.buf.definition, "Go to definition", { scope = lsp_scope })
 lsp.eager("K", vim.lsp.buf.hover, "Hover documentation", { scope = lsp_scope })
@@ -22,6 +26,11 @@ lsp.eager("<space>f", function()
 	vim.lsp.buf.format({ async = true })
 end, "Format buffer", { scope = lsp_scope })
 
+-- =============================================================================
+-- LSP configuration functions
+-- =============================================================================
+
+-- Configure diagnostics display settings
 local function configure_diagnostics()
 	vim.diagnostic.config({
 		virtual_text = {
@@ -44,6 +53,7 @@ local function configure_diagnostics()
 	})
 end
 
+-- Register a user command to display the status of active LSP clients
 local function register_lsp_status()
 	vim.api.nvim_create_user_command("LspStatus", function()
 		local clients = vim.lsp.get_clients()
@@ -65,6 +75,7 @@ local function register_lsp_status()
 	end, {})
 end
 
+-- Register an autocommand to attach nvim-navic to LSP clients that support document symbols
 local function register_lsp_attach()
 	local lsp_group = vim.api.nvim_create_augroup("k6e_lsp", {})
 
@@ -81,6 +92,8 @@ local function register_lsp_attach()
 	})
 end
 
+-- Initialize LSP configuration by setting up diagnostics, registering the LSP status
+-- command, and attaching nvim-navic to LSP clients
 local function initialize_lsp_policy()
 	configure_diagnostics()
 	register_lsp_status()
