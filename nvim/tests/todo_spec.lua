@@ -34,9 +34,9 @@ local function draw(todo, bufnr, filetype, text)
 	vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, text)
 	vim.api.nvim_set_current_buf(bufnr)
 	vim.bo[bufnr].filetype = filetype
-	if filetype == "lua" then
-		vim.treesitter.start(bufnr, "lua")
-		vim.treesitter.get_parser(bufnr, "lua"):parse()
+	if filetype == "lua" or filetype == "c" then
+		vim.treesitter.start(bufnr, filetype)
+		vim.treesitter.get_parser(bufnr, filetype):parse()
 	end
 	todo.setup()
 	vim.api.nvim__redraw({ win = vim.api.nvim_get_current_win(), flush = true, valid = false })
@@ -113,6 +113,76 @@ test("quickfix lists matches with title Todo", function()
 	equal(#list.items, 1, "one item")
 	truthy(list.items[1].text:find("NOTE: n", 1, true), "text")
 	equal(list.title, "Todo", "title")
+end)
+
+test("match accepts a start offset", function()
+	local todo = fresh()
+	local line = "TODO: a NOTE: b"
+	local m = todo.match(line, 5)
+	equal(m.kind, "Note", "second match")
+	equal(m.kw_start, 8, "second start")
+end)
+
+test("provider skips a string keyword but marks the comment one", function()
+	local todo = fresh()
+	local bufnr = vim.api.nvim_create_buf(false, true)
+	draw(todo, bufnr, "lua", { 'local s = "TODO: x" -- NOTE: y' })
+	local kw = {}
+	for _, mark in ipairs(todo._last_marks) do
+		if mark.hl:find("^K6eTodoKw") then
+			kw[#kw + 1] = mark
+		end
+	end
+	equal(#kw, 1, "one keyword mark: " .. vim.inspect(todo._last_marks))
+	equal(kw[1].hl, "K6eTodoKwNote", "note")
+	equal(kw[1].col, 23, "note col")
+end)
+
+test("text highlight stops at the comment end", function()
+	local todo = fresh()
+	local bufnr = vim.api.nvim_create_buf(false, true)
+	draw(todo, bufnr, "c", { "/* TODO: x */ foo();" })
+	local text
+	for _, mark in ipairs(todo._last_marks) do
+		if mark.hl == "K6eTodoTextTodo" then
+			text = mark
+		end
+	end
+	truthy(text, "text mark: " .. vim.inspect(todo._last_marks))
+	equal(text.col, 8, "text start")
+	equal(text.end_col, 13, "text end at comment end")
+end)
+
+test("provider skips buffers with a parser but no highlighter", function()
+	local todo = fresh()
+	local bufnr = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { "-- TODO: x" })
+	vim.api.nvim_set_current_buf(bufnr)
+	vim.bo[bufnr].filetype = "lua"
+	vim.treesitter.stop(bufnr)
+	todo.setup()
+	vim.api.nvim__redraw({ win = vim.api.nvim_get_current_win(), flush = true, valid = false })
+	equal(#todo._last_marks, 0, "no marks without highlighter")
+end)
+
+test("quickfix with no results notifies and opens nothing", function()
+	local todo = fresh()
+	require("core.external_tools").capture()
+	local dir = vim.fn.tempname()
+	vim.fn.mkdir(dir, "p")
+	local previous = vim.fn.getcwd()
+	vim.cmd.cd(dir)
+	vim.fn.setqflist({}, "r")
+	local messages = {}
+	local original = vim.notify
+	vim.notify = function(msg, level)
+		messages[#messages + 1] = { msg, level }
+	end
+	todo.quickfix()
+	vim.notify = original
+	vim.cmd.cd(previous)
+	equal(messages, { { "k6e.todo: no todos found", vim.log.levels.INFO } }, "notify")
+	equal(#vim.fn.getqflist(), 0, "qflist untouched")
 end)
 
 local failures = {}

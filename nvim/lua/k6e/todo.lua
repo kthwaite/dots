@@ -27,7 +27,7 @@ end
 local ns = vim.api.nvim_create_namespace("k6e.todo")
 
 --- Debug table: marks the provider set during the last window draw.
----@type { row: integer, col: integer, hl: string }[]
+---@type { row: integer, col: integer, end_col: integer, hl: string }[]
 M._last_marks = {}
 
 ---@class k6e.todo.Match
@@ -37,9 +37,10 @@ M._last_marks = {}
 
 --- Find the first keyword in a line. Keyword, optional `(author)`, then `:`.
 ---@param line string
+---@param init integer? 0-based byte offset to start searching from
 ---@return k6e.todo.Match?
-function M.match(line)
-	local init = 1
+function M.match(line, init)
+	init = (init or 0) + 1
 	while true do
 		local start, finish = line:find("[%w_]+", init)
 		if not start then
@@ -81,7 +82,16 @@ function M.quickfix()
 		{ "rg", "--vimgrep", "--no-messages", "-e", M.rg_pattern() },
 		{ text = true, cwd = vim.fn.getcwd() }
 	):wait()
+	-- rg exits 2 with empty stderr when it searched no files (empty directory).
+	if result.code > 1 and (result.stderr or "") ~= "" then
+		vim.notify("k6e.todo: rg failed: " .. (result.stderr or ""), vim.log.levels.ERROR)
+		return
+	end
 	local lines = vim.split(result.stdout or "", "\n", { trimempty = true })
+	if #lines == 0 then
+		vim.notify("k6e.todo: no todos found", vim.log.levels.INFO)
+		return
+	end
 	vim.fn.setqflist({}, " ", { title = "Todo", lines = lines })
 	vim.cmd.copen()
 end
@@ -116,9 +126,25 @@ local enabled_bufs = {}
 
 local function on_win(_, _, buf)
 	M._last_marks = {}
-	local ok, parser = pcall(vim.treesitter.get_parser, buf, nil, { error = false })
-	enabled_bufs[buf] = ok and parser ~= nil and parser ~= false
+	enabled_bufs[buf] = vim.treesitter.highlighter.active[buf] ~= nil
 	return enabled_bufs[buf]
+end
+
+--- End column of the comment node holding the position, if it ends on `row`.
+---@return integer?
+local function comment_end(buf, row, col)
+	local ok, node = pcall(vim.treesitter.get_node, { bufnr = buf, pos = { row, col } })
+	while ok and node and not node:type():find("comment", 1, true) do
+		node = node:parent()
+	end
+	if not ok or not node then
+		return nil
+	end
+	local _, _, end_row, end_col = node:range()
+	if end_row == row then
+		return end_col
+	end
+	return nil
 end
 
 local function on_line(_, _, buf, row)
@@ -129,17 +155,36 @@ local function on_line(_, _, buf, row)
 	if not line then
 		return
 	end
-	local m = M.match(line)
-	if not m or not in_comment(buf, row, m.kw_start) then
-		return
-	end
-	local kw_hl = "K6eTodoKw" .. m.kind
-	local text_hl = "K6eTodoText" .. m.kind
-	vim.api.nvim_buf_set_extmark(buf, ns, row, m.kw_start, { end_col = m.kw_end, hl_group = kw_hl, ephemeral = true })
-	M._last_marks[#M._last_marks + 1] = { row = row, col = m.kw_start, hl = kw_hl }
-	if m.kw_end < #line then
-		vim.api.nvim_buf_set_extmark(buf, ns, row, m.kw_end, { end_col = #line, hl_group = text_hl, ephemeral = true })
-		M._last_marks[#M._last_marks + 1] = { row = row, col = m.kw_end, hl = text_hl }
+	local init = 0
+	while true do
+		local m = M.match(line, init)
+		if not m then
+			return
+		end
+		init = m.kw_end
+		if in_comment(buf, row, m.kw_start) then
+			local kw_hl = "K6eTodoKw" .. m.kind
+			local text_hl = "K6eTodoText" .. m.kind
+			vim.api.nvim_buf_set_extmark(
+				buf,
+				ns,
+				row,
+				m.kw_start,
+				{ end_col = m.kw_end, hl_group = kw_hl, ephemeral = true }
+			)
+			M._last_marks[#M._last_marks + 1] = { row = row, col = m.kw_start, end_col = m.kw_end, hl = kw_hl }
+			local stop = math.min(#line, comment_end(buf, row, m.kw_start) or #line)
+			if m.kw_end < stop then
+				vim.api.nvim_buf_set_extmark(
+					buf,
+					ns,
+					row,
+					m.kw_end,
+					{ end_col = stop, hl_group = text_hl, ephemeral = true }
+				)
+				M._last_marks[#M._last_marks + 1] = { row = row, col = m.kw_end, end_col = stop, hl = text_hl }
+			end
+		end
 	end
 end
 
