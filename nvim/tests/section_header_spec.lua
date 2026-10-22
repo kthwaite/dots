@@ -52,14 +52,14 @@ local function assert_no_extmarks(bufnr, message)
 end
 
 local function unavailable_comment()
-	error("Comment.nvim unavailable")
+	error("k6e.comment unavailable")
 end
 
 local function with_adapters(input, comment_loader, callback)
 	local original_input = vim.ui.input
 	local original_notify = vim.notify
-	local original_loaded = package.loaded["Comment.ft"]
-	local original_preload = package.preload["Comment.ft"]
+	local original_loaded = package.loaded["k6e.comment"]
+	local original_preload = package.preload["k6e.comment"]
 	local original_buffer = vim.api.nvim_get_current_buf()
 	local notifications = {}
 
@@ -67,8 +67,8 @@ local function with_adapters(input, comment_loader, callback)
 	vim.notify = function(message, level)
 		notifications[#notifications + 1] = { message = message, level = level }
 	end
-	package.loaded["Comment.ft"] = nil
-	package.preload["Comment.ft"] = comment_loader
+	package.loaded["k6e.comment"] = nil
+	package.preload["k6e.comment"] = comment_loader
 
 	local ok, err = xpcall(function()
 		callback(notifications)
@@ -76,8 +76,8 @@ local function with_adapters(input, comment_loader, callback)
 
 	vim.ui.input = original_input
 	vim.notify = original_notify
-	package.loaded["Comment.ft"] = original_loaded
-	package.preload["Comment.ft"] = original_preload
+	package.loaded["k6e.comment"] = original_loaded
+	package.preload["k6e.comment"] = original_preload
 	if vim.api.nvim_buf_is_valid(original_buffer) then
 		vim.api.nvim_set_current_buf(original_buffer)
 	end
@@ -105,7 +105,7 @@ test("inserts an 80-column line-comment header", function()
 	end, function()
 		return {
 			get = function()
-				return { "--%s", "/*%s*/" }
+				return { line = "--%s", block = "/*%s*/" }
 			end,
 		}
 	end, function(notifications)
@@ -113,7 +113,7 @@ test("inserts an 80-column line-comment header", function()
 		section_header.insert()
 		local actual = lines(bufnr)
 		equal(#actual, 4, "one insertion must add exactly three lines")
-		equal(actual[2], "-- Parser", "title must use Comment.nvim line syntax")
+		equal(actual[2], "-- Parser", "title must use k6e.comment line syntax")
 		equal(vim.fn.strdisplaywidth(actual[1]), 80, "opening separator must be 80 display columns")
 		equal(vim.fn.strdisplaywidth(actual[3]), 80, "closing separator must be 80 display columns")
 		equal(actual[4], "anchor", "header must precede the cursor line")
@@ -123,21 +123,21 @@ test("inserts an 80-column line-comment header", function()
 	end)
 end)
 
-test("pads raw Comment.nvim block-comment wrappers", function()
+test("pads raw k6e.comment block-comment wrappers", function()
 	with_adapters(function(_, callback)
 		callback("Blocks")
 	end, function()
 		return {
 			get = function()
-				return { [2] = "/*%s*/" }
+				return { block = "/*%s*/" }
 			end,
 		}
 	end, function(notifications)
 		local bufnr = new_buffer({ "anchor" }, "# %s")
 		section_header.insert()
 		local actual = lines(bufnr)
-		equal(actual[1]:sub(1, 3), "/* ", "raw block prefix must receive Comment.nvim padding")
-		equal(actual[1]:sub(-3), " */", "raw block suffix must receive Comment.nvim padding")
+		equal(actual[1]:sub(1, 3), "/* ", "raw block prefix must receive k6e.comment padding")
+		equal(actual[1]:sub(-3), " */", "raw block suffix must receive k6e.comment padding")
 		equal(actual[2], "/* Blocks */", "raw block title must retain its padded complete wrapper")
 		equal(vim.fn.strdisplaywidth(actual[1]), 80, "raw block separator must be 80 display columns")
 		equal(vim.fn.strdisplaywidth(actual[3]), 80, "closing raw block separator must be 80 display columns")

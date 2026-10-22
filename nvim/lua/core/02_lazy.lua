@@ -88,6 +88,7 @@ require("lazy").setup({
 	spec = M.spec,
 })
 require("k6e.startscreen").setup()
+require("k6e.comment").setup()
 require("core.keymaps").activate()
 
 return M

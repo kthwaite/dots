@@ -58,7 +58,7 @@ local function split_comment_value(value)
 end
 
 local function resolve_comment(bufnr)
-	local ok, ft = pcall(require, "Comment.ft")
+	local ok, ft = pcall(require, "k6e.comment")
 	if ok and type(ft) == "table" and type(ft.get) == "function" then
 		local got_comment, comment = pcall(ft.get, vim.bo[bufnr].filetype)
 		if got_comment then
