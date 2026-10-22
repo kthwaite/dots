@@ -1004,6 +1004,14 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 	package.loaded.snacks = original_snacks_module
 
 	local neogit_spec = specs_by_name["NeogitOrg/neogit"]
+	truthy(
+		vim.tbl_contains(neogit_spec.dependencies, "dlyongemallo/diffview-plus.nvim"),
+		"Neogit must depend on diffview-plus"
+	)
+	truthy(
+		not vim.tbl_contains(neogit_spec.dependencies, "sindrets/diffview.nvim"),
+		"Neogit must not depend on unmaintained diffview"
+	)
 	if neogit_spec.enabled() then
 		equal(#neogit_spec.keys, 1, "enabled Neogit must expose only its commit claim")
 		equal(neogit_spec.keys[1][1], "<leader>gc", "Neogit must not independently claim <leader>gg")

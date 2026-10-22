@@ -20,7 +20,7 @@ return {
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			"folke/snacks.nvim",
-			"sindrets/diffview.nvim",
+			"dlyongemallo/diffview-plus.nvim",
 		},
 		config = true,
 		keys = keys,
