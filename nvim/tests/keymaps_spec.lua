@@ -647,7 +647,17 @@ isolated("includes the conditional Neogit fallback in the default Lazy graph", f
 end)
 
 isolated("uses one stable no-lazygit decision with a Lazy Neogit command trigger", function()
-	vim.g.has_lazygit = false
+	local original_executable = vim.fn.executable
+	local original_external_tools = package.loaded["core.external_tools"]
+	vim.fn.executable = function(name)
+		if name == "lazygit" then
+			return 0
+		end
+		return original_executable(name)
+	end
+	package.loaded["core.external_tools"] = nil
+	require("core.external_tools").capture()
+	vim.fn.executable = original_executable
 	package.loaded["plugins.core.enhancements"] = nil
 	package.loaded["plugins.neogit"] = nil
 
@@ -675,9 +685,19 @@ isolated("uses one stable no-lazygit decision with a Lazy Neogit command trigger
 	equal(neogit_spec.keys[1][1], "<leader>gc", "fallback Neogit must own only <leader>gc")
 	equal(git_ui_key[2], "<cmd>Neogit<cr>", "git-ui must use the Lazy Neogit command when lazygit is unavailable")
 
-	vim.g.has_lazygit = true
+	vim.fn.executable = function(name)
+		if name == "lazygit" then
+			return 1
+		end
+		return original_executable(name)
+	end
 	truthy(neogit_spec.enabled(), "Neogit enablement must not diverge after the startup decision")
 	equal(git_ui_key[2], "<cmd>Neogit<cr>", "git-ui adapter must not diverge after the startup decision")
+
+	vim.fn.executable = original_executable
+	package.loaded["core.external_tools"] = original_external_tools
+	package.loaded["plugins.core.enhancements"] = nil
+	package.loaded["plugins.neogit"] = nil
 end)
 
 isolated("routes completion Tab behavior through co-located owners", function()
@@ -854,7 +874,6 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 		"plugins.core.treesitter",
 		"plugins.core.ui",
 		"plugins.neogit",
-		"plugins.undotree",
 	}
 	local specs_by_name = {}
 	for _, module_name in ipairs(module_names) do
@@ -897,7 +916,6 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 		["folke/noice.nvim"] = "noice",
 		["akinsho/bufferline.nvim"] = "bufferline",
 		["NeogitOrg/neogit"] = "neogit",
-		["mbbill/undotree"] = "undotree",
 	}
 	for plugin, owner in pairs(expected_owners) do
 		local spec = specs_by_name[plugin]
@@ -970,7 +988,8 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 	equal(inspect_key[2], "<cmd>Keymaps<cr>", "<leader>sk must execute :Keymaps")
 
 	local original_snacks_module = package.loaded.snacks
-	if vim.g.has_lazygit then
+	require("core.external_tools").capture()
+	if require("core.external_tools").git_ui() == "lazygit" then
 		local lazygit_calls = 0
 		package.loaded.snacks = {
 			lazygit = function()
