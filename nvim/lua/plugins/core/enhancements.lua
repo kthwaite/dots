@@ -88,6 +88,9 @@ return {
 			snacks.lazy("<leader>th", function()
 				require("snacks").picker.colorschemes({ layout = "ivy" })
 			end, "Pick color scheme"),
+			snacks.lazy("<leader>te", function()
+				Snacks.picker.diagnostics()
+			end, "Diagnostics"),
 			snacks.lazy("<leader>sh", function()
 				require("snacks").picker.help()
 			end, "Help pages"),

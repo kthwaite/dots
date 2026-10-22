@@ -102,7 +102,7 @@ Run `:Keymaps` to open the same keymap ownership picker.
 |------|-----|--------|
 | n | `<leader>?` | Show buffer keymaps (which-key) |
 | n | `<leader>o` | Toggle symbol outline |
-| n | `<leader>te` | Toggle diagnostics (Trouble) |
+| n | `<leader>te` | Diagnostics picker (Snacks) |
 | n | `<leader>tt` | Todo list (Picker) |
 | n | `<leader>tq` | Todo list (Quickfix) |
 | n | `<leader>u` | Toggle undo tree |

@@ -909,7 +909,6 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 	local expected_owners = {
 		["folke/which-key.nvim"] = "which-key",
 		["folke/snacks.nvim"] = "snacks",
-		["folke/trouble.nvim"] = "trouble",
 		["hedyhli/outline.nvim"] = "outline",
 		["danymat/neogen"] = "neogen",
 		["folke/noice.nvim"] = "noice",
@@ -936,6 +935,12 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 	equal(#help_rows, 1, "<leader>sh must have exactly one claim")
 	equal(help_rows[1].owner, "snacks", "<leader>sh must remain Snacks help")
 	equal(help_rows[1].description, "Help pages", "<leader>sh help behaviour changed")
+
+	local diagnostics_rows = matching_rows("<leader>te", "n")
+	equal(#diagnostics_rows, 1, "<leader>te must have exactly one claim")
+	equal(diagnostics_rows[1].owner, "snacks", "<leader>te must be owned by Snacks")
+	equal(diagnostics_rows[1].description, "Diagnostics", "<leader>te description changed")
+	equal(diagnostics_rows[1].realization, "lazy", "<leader>te must use the Lazy adapter")
 
 	local inspect_rows = matching_rows("<leader>sk", "n")
 	equal(#inspect_rows, 1, "<leader>sk must have exactly one claim")
