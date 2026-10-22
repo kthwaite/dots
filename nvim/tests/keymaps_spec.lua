@@ -911,7 +911,6 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 		["folke/snacks.nvim"] = "snacks",
 		["folke/trouble.nvim"] = "trouble",
 		["hedyhli/outline.nvim"] = "outline",
-		["folke/todo-comments.nvim"] = "todo-comments",
 		["danymat/neogen"] = "neogen",
 		["folke/noice.nvim"] = "noice",
 		["akinsho/bufferline.nvim"] = "bufferline",

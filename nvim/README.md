@@ -103,7 +103,7 @@ Run `:Keymaps` to open the same keymap ownership picker.
 | n | `<leader>?` | Show buffer keymaps (which-key) |
 | n | `<leader>o` | Toggle symbol outline |
 | n | `<leader>te` | Toggle diagnostics (Trouble) |
-| n | `<leader>tt` | Todo list (Trouble) |
+| n | `<leader>tt` | Todo list (Picker) |
 | n | `<leader>tq` | Todo list (Quickfix) |
 | n | `<leader>u` | Toggle undo tree |
 | n | `<leader>z` | Toggle Zen mode |
