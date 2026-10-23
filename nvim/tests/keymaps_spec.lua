@@ -912,7 +912,6 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 		["hedyhli/outline.nvim"] = "outline",
 		["danymat/neogen"] = "neogen",
 		["folke/noice.nvim"] = "noice",
-		["akinsho/bufferline.nvim"] = "bufferline",
 		["NeogitOrg/neogit"] = "neogit",
 	}
 	for plugin, owner in pairs(expected_owners) do

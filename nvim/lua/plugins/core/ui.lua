@@ -1,5 +1,4 @@
 local keymaps = require("core.keymaps")
-local bufferline = keymaps.owner("bufferline")
 local noice = keymaps.owner("noice")
 
 return {
@@ -89,23 +88,6 @@ return {
 			},
 			tabline = {},
 			extensions = {},
-		},
-	},
-	{
-
-		"akinsho/bufferline.nvim",
-		event = "VeryLazy",
-		version = "*",
-		dependencies = "nvim-tree/nvim-web-devicons",
-		opts = {
-			options = {
-				diagnostics = "nvim_lsp",
-			},
-		},
-		keys = {
-			bufferline.lazy("<leader>bb", "<cmd>BufferLineMovePrev<cr>", "Next buffer tab"),
-			bufferline.lazy("<leader>bn", "<cmd>BufferLineMoveNext<cr>", "Prev buffer tab"),
-			bufferline.lazy("<leader>bp", "<cmd>BufferLinePick<cr>", "Pick buffer tab"),
 		},
 	},
 }
