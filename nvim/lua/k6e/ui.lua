@@ -322,12 +322,16 @@ end
 function M.redirect(cmd)
 	local ok, result = pcall(vim.api.nvim_exec2, cmd, { output = true })
 	local text = ok and result.output or tostring(result)
+	local lines = vim.split(text, "\n", { trimempty = true })
+	if #lines == 0 then
+		lines = { "" }
+	end
 	vim.cmd("botright new")
 	local b = vim.api.nvim_get_current_buf()
 	vim.bo[b].buftype = "nofile"
 	vim.bo[b].bufhidden = "wipe"
 	vim.bo[b].filetype = "k6e-redirect"
-	vim.api.nvim_buf_set_lines(b, 0, -1, false, vim.split(text, "\n", { plain = true }))
+	vim.api.nvim_buf_set_lines(b, 0, -1, false, lines)
 end
 
 function M.setup()

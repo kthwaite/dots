@@ -202,6 +202,15 @@ test("preserves buffer-local mappings and navigation context", function()
 		end
 	end
 
+	local original_hover = vim.lsp.buf.hover
+	local hover_options
+	vim.lsp.buf.hover = function(options)
+		hover_options = options
+	end
+	mapping_for(bufnr, "K").callback()
+	vim.lsp.buf.hover = original_hover
+	equal(hover_options and hover_options.border, "rounded", "K must request a rounded hover border")
+
 	local original_jump = vim.diagnostic.jump
 	local original_format = vim.lsp.buf.format
 	local jumps = {}
