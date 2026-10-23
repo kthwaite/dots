@@ -124,11 +124,17 @@ end
 
 ---@param client vim.lsp.Client
 ---@return integer[]
-local function lua_buffers(client)
-	return vim.tbl_filter(function(buf)
-		return vim.bo[buf].filetype == "lua"
-	end, vim.lsp.get_buffers_by_client_id(client.id))
+function M._lua_buffers(client)
+	local bufs = {}
+	for buf in pairs(client.attached_buffers) do
+		if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].filetype == "lua" then
+			bufs[#bufs + 1] = buf
+		end
+	end
+	table.sort(bufs)
+	return bufs
 end
+local lua_buffers = M._lua_buffers
 
 ---@type table<integer, uv.uv_timer_t>
 local timers = {}

@@ -130,6 +130,21 @@ test("_refresh ignores inactive roots", function()
 	equal(n, 0, "no notify")
 end)
 
+test("_lua_buffers reads attached_buffers without the deprecated API", function()
+	local lua = lua_buf({})
+	vim.bo[lua].filetype = "lua"
+	local text = lua_buf({})
+	vim.bo[text].filetype = "text"
+	local deprecated = vim.lsp.get_buffers_by_client_id
+	vim.lsp.get_buffers_by_client_id = function()
+		error("deprecated API called")
+	end
+	local ok, result = pcall(luadev._lua_buffers, { id = 1, attached_buffers = { [lua] = true, [text] = true } })
+	vim.lsp.get_buffers_by_client_id = deprecated
+	assert(ok, result)
+	equal(result, { lua }, "lua buffers only")
+end)
+
 local failures = {}
 for _, case in ipairs(tests) do
 	local ok, err = pcall(case.callback)
