@@ -161,9 +161,10 @@ end
 local function place_cursor(line, row, col)
 	vim.api.nvim_buf_clear_namespace(buf, cursor_ns, 0, -1)
 	if col >= #line then
+		-- Inline, so the cell wraps to a new row when the line fills the width.
 		vim.api.nvim_buf_set_extmark(buf, cursor_ns, row, #line, {
 			virt_text = { { " ", "K6eUiCursor" } },
-			virt_text_pos = "overlay",
+			virt_text_pos = "inline",
 		})
 	else
 		vim.api.nvim_buf_set_extmark(buf, cursor_ns, row, col, {
@@ -200,7 +201,7 @@ local function render()
 		row = math.floor(vim.o.lines * 0.25),
 		col = math.floor((vim.o.columns - width - 2) / 2),
 		width = width,
-		height = #lines,
+		height = 1,
 		border = "rounded",
 		title = kind.title,
 		title_pos = "center",
@@ -213,6 +214,10 @@ local function render()
 		config.style = "minimal"
 		config.noautocmd = true
 		win = vim.api.nvim_open_win(buf, false, config)
+		-- The float copies options from the current window. Row counts below need wrap.
+		vim.wo[win].wrap = true
+		vim.wo[win].scrolloff = 0
+		vim.wo[win].virtualedit = "onemore"
 	end
 	shown = { title = kind.title, level = level }
 
@@ -225,8 +230,35 @@ local function render()
 		pcall(highlight, row, last, kind.lang)
 	end
 	place_cursor(last, row, entry.pos)
-	-- Screen position of the text line: 1-based row below the top border, 0-based col after the icon.
-	vim.g.ui_cmdline_pos = { config.row + 1 + #lines, config.col + 1 + icon_width }
+
+	-- Height: screen rows of all lines as wrapped at `width`, with the icon and cursor marks.
+	-- Capped at half the editor.
+	config.height = math.max(1, math.min(vim.api.nvim_win_text_height(win, {}).all, math.floor(vim.o.lines / 2)))
+	vim.api.nvim_win_set_config(win, { height = config.height })
+	-- Keep the cursor visible when the height is capped: reset the view, then set the window cursor.
+	-- nvim_win_set_cursor scrolls even a non-current window (topline, or skipcol on one long line).
+	vim.api.nvim_win_call(win, function()
+		vim.fn.winrestview({ topline = 1, skipcol = 0 })
+	end)
+	vim.api.nvim_win_set_cursor(win, { row + 1, entry.pos })
+
+	-- End vcol (1-based) of the cursor cell. At end of line, that is the inline cursor mark.
+	local vcols = vim.fn.virtcol({ row + 1, entry.pos + 1 }, true, win)
+	local cursor_vcol = entry.pos >= #last and vcols[1] or vcols[2]
+	local view = vim.api.nvim_win_call(win, vim.fn.winsaveview)
+	-- 1-based window row of the cursor, and its wrapped row within the text line.
+	local cursor_row = vim.api.nvim_win_text_height(win, {
+		start_row = view.topline - 1,
+		start_vcol = view.skipcol,
+		end_row = row,
+		end_vcol = cursor_vcol,
+	}).all
+	local line_rows = vim.api.nvim_win_text_height(win, { start_row = row, end_row = row, end_vcol = cursor_vcol })
+	local wrapped = line_rows.all - 1
+	-- Screen position for blink, as noice and the native cmdline set it:
+	-- 1-based row of the cursor row, 0-based col of the text start - 1.
+	-- On a wrapped row the col moves left by one width per row, so `col + byte offset` lands on that row.
+	vim.g.ui_cmdline_pos = { config.row + 1 + cursor_row, config.col + icon_width - wrapped * width }
 end
 
 local handlers = {}
@@ -330,12 +362,17 @@ function M.redirect(cmd)
 	local b = vim.api.nvim_get_current_buf()
 	vim.bo[b].buftype = "nofile"
 	vim.bo[b].bufhidden = "wipe"
+	vim.bo[b].buflisted = false
 	vim.bo[b].filetype = "k6e-redirect"
 	vim.api.nvim_buf_set_lines(b, 0, -1, false, lines)
 end
 
 function M.setup()
 	require("core.keymaps").owner("ui").eager("<S-CR>", function()
+		-- Only Ex cmdlines run as commands. Search and input() accept as with <CR>.
+		if vim.fn.getcmdtype() ~= ":" then
+			return "<CR>"
+		end
 		local cmd = vim.fn.getcmdline()
 		vim.schedule(function()
 			require("k6e.ui").redirect(cmd)

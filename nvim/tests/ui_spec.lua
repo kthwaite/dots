@@ -94,7 +94,8 @@ test("show and hide", function()
 	equal(config.zindex, 200, "zindex")
 	equal(config.focusable, false, "focusable")
 	equal(vim.api.nvim_win_get_buf(state.win), state.buf, "buffer")
-	equal(vim.g.ui_cmdline_pos, { config.row + 2, config.col + 1 + vim.api.nvim_strwidth(CMDLINE .. " ") }, "pos")
+	-- blink places its menu at pos[2] + start_col (1-based), so pos[2] is the text start col - 1.
+	equal(vim.g.ui_cmdline_pos, { config.row + 2, config.col + vim.api.nvim_strwidth(CMDLINE .. " ") }, "pos")
 
 	local win = state.win
 	ui.handle("cmdline_hide", 1, false)
@@ -199,6 +200,61 @@ test("block lines", function()
 	equal(ui._state().lines, { "lua <<EOF", "print(1)", "" }, "appended")
 	ui.handle("cmdline_block_hide")
 	equal(ui._state().lines, { "" }, "block hidden")
+end)
+
+test("long cmdline wraps and keeps its tail visible", function()
+	local ui = fresh()
+	vim.o.columns = 100
+	local text = "lua " .. ("x"):rep(150)
+	show(ui, text)
+	local win = ui._state().win
+	local config = vim.api.nvim_win_get_config(win)
+	local icon_width = vim.api.nvim_strwidth(LUA .. " ")
+	equal(config.width, 96, "capped width")
+	-- Icon (2) + text (154) + end-of-line cursor (1) = 157 cells on 96-cell rows.
+	equal(config.height, 2, "height counts wrapped rows")
+	truthy(vim.fn.screenpos(win, 1, #text).row ~= 0, "last char on screen")
+	equal(vim.g.ui_cmdline_pos, { config.row + 3, config.col + icon_width - 96 }, "pos follows the wrapped cursor row")
+
+	ui.handle("cmdline_pos", 0, 1)
+	equal(vim.g.ui_cmdline_pos, { config.row + 2, config.col + icon_width }, "pos on the first row")
+end)
+
+test("wide block lines count their wrapped rows", function()
+	local ui = fresh()
+	vim.o.columns = 100
+	ui.handle("cmdline_block_show", { { { 0, ("y"):rep(150) } } })
+	show(ui, "ec")
+	local win = ui._state().win
+	local config = vim.api.nvim_win_get_config(win)
+	equal(config.width, 60, "width from the text line")
+	equal(config.height, 3 + 1, "block line wraps to 3 rows")
+	truthy(vim.fn.screenpos(win, 1, 150).row ~= 0, "block tail on screen")
+	equal(vim.g.ui_cmdline_pos[1], config.row + 1 + 4, "pos row below the wrapped block")
+end)
+
+test("height is capped and the cursor row stays visible", function()
+	local ui = fresh()
+	local block = {}
+	for i = 1, 30 do
+		block[i] = { { 0, "line " .. i } }
+	end
+	ui.handle("cmdline_block_show", block)
+	show(ui, "ec")
+	local win = ui._state().win
+	local config = vim.api.nvim_win_get_config(win)
+	equal(config.height, 20, "capped at half the editor")
+	equal(vim.api.nvim_win_call(win, vim.fn.winsaveview).topline, 12, "scrolled to the text line")
+	equal(vim.g.ui_cmdline_pos[1], config.row + 1 + 20, "pos on the bottom row")
+
+	ui.handle("cmdline_block_hide")
+	vim.o.columns = 100
+	local text = ("x"):rep(3000)
+	show(ui, text)
+	config = vim.api.nvim_win_get_config(win)
+	equal(config.height, 20, "long line capped")
+	truthy(vim.fn.screenpos(win, 1, #text).row ~= 0, "last char on screen")
+	equal(vim.g.ui_cmdline_pos[1], config.row + 1 + 20, "pos on the bottom row")
 end)
 
 test("nested level", function()
@@ -359,7 +415,53 @@ test("redirect shows command output in a scratch split", function()
 	local b = vim.api.nvim_get_current_buf()
 	equal(vim.bo[b].filetype, "k6e-redirect", "filetype")
 	equal(vim.api.nvim_buf_get_lines(b, 0, -1, false), { "hi" }, "output lines")
+	equal(vim.bo[b].buflisted, false, "not listed")
 	vim.cmd("bwipeout!")
+end)
+
+--- The <S-CR> expr callback, after a fresh setup and activation.
+local function shift_enter(ui)
+	package.loaded["core.keymaps"] = nil
+	ui.setup()
+	require("core.keymaps").activate()
+	local callback = vim.fn.maparg("<S-CR>", "c", false, true).callback
+	ui.detach()
+	truthy(type(callback) == "function", "<S-CR> mapped with a callback")
+	return callback
+end
+
+--- Call `callback` as if the cmdline type were `cmdtype`; return its result and the redirected commands.
+local function press(ui, callback, cmdtype)
+	local redirected = {}
+	local original_redirect, original_type, original_line = ui.redirect, vim.fn.getcmdtype, vim.fn.getcmdline
+	ui.redirect = function(cmd)
+		redirected[#redirected + 1] = cmd
+	end
+	vim.fn.getcmdtype = function()
+		return cmdtype
+	end
+	vim.fn.getcmdline = function()
+		return "d"
+	end
+	local ok, result = pcall(callback)
+	vim.fn.getcmdtype, vim.fn.getcmdline = original_type, original_line
+	vim.wait(20)
+	ui.redirect = original_redirect
+	assert(ok, result)
+	return result, redirected
+end
+
+test("<S-CR> redirects only Ex cmdlines", function()
+	local ui = fresh()
+	local callback = shift_enter(ui)
+	local result, redirected = press(ui, callback, ":")
+	equal(result, "<C-c>", "Ex cmdline is cancelled")
+	equal(redirected, { "d" }, "Ex cmdline redirected")
+	for _, cmdtype in ipairs({ "/", "?", "@", "=" }) do
+		result, redirected = press(ui, callback, cmdtype)
+		equal(result, "<CR>", cmdtype .. " cmdline accepts normally")
+		equal(redirected, {}, cmdtype .. " cmdline not redirected")
+	end
 end)
 
 test("redirect trims blank lines around the output", function()
