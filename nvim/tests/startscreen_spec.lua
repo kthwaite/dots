@@ -623,12 +623,24 @@ with_scratch(function(buffer)
 		"[q] Quit",
 	}, "production layout, filtering, numbering, shortening, or section limits changed")
 
+	local width = vim.api.nvim_win_get_width(vim.fn.win_findbuf(buffer)[1])
+	local menu_left = math.floor((width - vim.fn.strdisplaywidth("[11] M  ~/project/src/a.lua")) / 2)
+	truthy(menu_left > 0, "menu block is not indented")
 	equal({
+		row_start(buffer, "[e] New file"),
 		row_start(buffer, "MRU"),
 		row_start(buffer, "[10] M  ~/outside.txt"),
 		row_start(buffer, "MRU ~/project"),
 		row_start(buffer, "[0] M  src/a.lua"),
-	}, { 0, 0, 0, 0 }, "global and cwd MRU sections did not share the normal left edge")
+		row_start(buffer, "[q] Quit"),
+	}, {
+		menu_left,
+		menu_left,
+		menu_left,
+		menu_left,
+		menu_left,
+		menu_left,
+	}, "menu rows were not centred as one block with a shared left edge")
 
 	equal(row_highlights(buffer, "[11] M  ~/project/src/a.lua"), {
 		{ group = "Operator", start_col = 0, end_col = 1 },

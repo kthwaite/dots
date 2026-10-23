@@ -215,27 +215,13 @@ local function production_layout()
 		{ type = "padding", val = 1 },
 		{
 			type = "group",
+			opts = { position = "block" },
 			val = {
 				button("e", "New file", "<cmd>ene <CR>"),
-			},
-		},
-		{
-			type = "group",
-			val = {
-				{
-					type = "group",
-					val = {
-						{ type = "padding", val = 1 },
-						{ type = "text", val = "MRU", opts = { hl = "SpecialComment" } },
-						{ type = "padding", val = 1 },
-						mru_buttons(10),
-					},
-				},
-			},
-		},
-		{
-			type = "group",
-			val = {
+				{ type = "padding", val = 1 },
+				{ type = "text", val = "MRU", opts = { hl = "SpecialComment" } },
+				{ type = "padding", val = 1 },
+				mru_buttons(10),
 				{ type = "padding", val = 1 },
 				{
 					type = "text",
@@ -244,16 +230,10 @@ local function production_layout()
 				},
 				{ type = "padding", val = 1 },
 				mru_buttons(0, cwd),
-			},
-		},
-		{ type = "padding", val = 1 },
-		{
-			type = "group",
-			val = {
+				{ type = "padding", val = 1 },
 				button("q", "Quit", "<cmd>q <CR>"),
 			},
 		},
-		{ type = "group", val = {} },
 	}
 end
 
@@ -341,7 +321,7 @@ end
 
 local render_element
 
-local function render_group(element, opts, rendered, width)
+local function render_children(element, opts, rendered, width)
 	local value = resolve(element.val)
 	if type(value) ~= "table" then
 		return
@@ -355,6 +335,42 @@ local function render_group(element, opts, rendered, width)
 		if child ~= nil then
 			render_element(child, opts, rendered, width)
 		end
+	end
+end
+
+-- A "block" group keeps its rows left-aligned to each other and centres the block as a whole.
+local function render_block(element, opts, rendered, width)
+	local block = { lines = {}, highlights = {}, buttons = {} }
+	render_children(element, vim.tbl_extend("force", opts, { position = "left" }), block, width)
+
+	local block_width = 0
+	for _, line in ipairs(block.lines) do
+		block_width = math.max(block_width, vim.fn.strdisplaywidth(line))
+	end
+	local left = math.max(0, math.floor((width - block_width) / 2))
+	local top = #rendered.lines
+	local indent = string.rep(" ", left)
+
+	for _, line in ipairs(block.lines) do
+		rendered.lines[#rendered.lines + 1] = line == "" and line or indent .. line
+	end
+	for _, highlight in ipairs(block.highlights) do
+		highlight.row = highlight.row + top
+		highlight.start_col = highlight.start_col + left
+		highlight.end_col = highlight.end_col + left
+		rendered.highlights[#rendered.highlights + 1] = highlight
+	end
+	for _, button in ipairs(block.buttons) do
+		button.row = button.row + top
+		rendered.buttons[#rendered.buttons + 1] = button
+	end
+end
+
+local function render_group(element, opts, rendered, width)
+	if opts.position == "block" then
+		render_block(element, opts, rendered, width)
+	else
+		render_children(element, opts, rendered, width)
 	end
 end
 
