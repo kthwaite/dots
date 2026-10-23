@@ -129,6 +129,20 @@ test("diagnostic count", function()
 	truthy(plain(t.render()):find("E2", 1, true), "E2")
 end)
 
+test("diagnostic change redraws", function()
+	local t = fresh()
+	local a = named("/x/a.lua")
+	vim.api.nvim_buf_set_lines(a, 0, -1, false, { "x" })
+	local redraws = 0
+	t.redraw = function()
+		redraws = redraws + 1
+	end
+	local ns = vim.api.nvim_create_namespace("tabline_test_redraw")
+	vim.diagnostic.set(ns, a, { { lnum = 0, col = 0, severity = vim.diagnostic.severity.WARN, message = "w" } })
+	truthy(redraws > 0, "redraw ran on DiagnosticChanged")
+	truthy(plain(t.render()):find("W1", 1, true), "new count rendered")
+end)
+
 test("click handlers", function()
 	local t = fresh()
 	local a, b = named("/x/a.lua"), named("/x/b.lua")
@@ -159,6 +173,23 @@ test("close falls back to bdelete", function()
 	vim.api.nvim_set_current_buf(a)
 	_G.K6eTablineClose(b, 1, "l", "")
 	equal(t.order(), { a }, "b removed")
+end)
+
+test("bdelete failure notifies", function()
+	local t = fresh()
+	local a = named("/x/a.lua")
+	vim.api.nvim_set_current_buf(a)
+	vim.bo[a].modified = true
+	local original = vim.notify
+	local seen
+	vim.notify = function(msg, level)
+		seen = { msg, level }
+	end
+	_G.K6eTablineClose(a, 1, "l", "")
+	vim.notify = original
+	truthy(seen and seen[2] == vim.log.levels.WARN, "warned")
+	vim.bo[a].modified = false
+	t.order()
 end)
 
 test("scroll keeps current visible", function()

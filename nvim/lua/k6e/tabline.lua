@@ -38,7 +38,7 @@ end
 
 --- Redraw the tabline. Without a UI (nvim -l, --headless) :redrawtabline
 --- crashes nvim 0.12.6 intermittently, and there is nothing to draw anyway.
-local function redraw()
+function M.redraw()
 	if #vim.api.nvim_list_uis() > 0 then
 		vim.cmd.redrawtabline()
 	end
@@ -297,7 +297,7 @@ function M.move(delta)
 		return
 	end
 	order[i], order[j] = order[j], order[i]
-	redraw()
+	M.redraw()
 end
 
 --- Go to the next or previous buffer in the order. Wraps.
@@ -323,10 +323,10 @@ function M.pick()
 		by_label[label] = buf
 	end
 	pick_labels = labels
-	redraw()
+	M.redraw()
 	local ok, char = pcall(vim.fn.getcharstr)
 	pick_labels = nil
-	redraw()
+	M.redraw()
 	local buf = ok and by_label[char] or nil
 	if buf and vim.api.nvim_buf_is_valid(buf) then
 		vim.api.nvim_set_current_buf(buf)
@@ -339,7 +339,10 @@ local function delete(buf)
 	if snacks and snacks.bufdelete then
 		snacks.bufdelete(buf)
 	else
-		pcall(vim.cmd.bdelete, buf)
+		local ok, err = pcall(vim.cmd.bdelete, buf)
+		if not ok then
+			vim.notify(tostring(err), vim.log.levels.WARN)
+		end
 	end
 end
 
@@ -382,6 +385,12 @@ function M.setup()
 			else
 				remove(ev.buf)
 			end
+		end,
+	})
+	vim.api.nvim_create_autocmd("DiagnosticChanged", {
+		group = group,
+		callback = function()
+			M.redraw()
 		end,
 	})
 	vim.api.nvim_create_autocmd({ "BufDelete", "BufWipeout" }, {
