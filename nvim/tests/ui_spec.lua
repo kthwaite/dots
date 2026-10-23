@@ -81,7 +81,7 @@ test("show and hide", function()
 	ui.handle("cmdline_show", { { 0, "ec" } }, 2, ":", "", 0, 1, 0)
 	local state = ui._state()
 	truthy(state.visible, "visible after show")
-	equal(state.lines, { CMDLINE .. " ec" }, "lines")
+	equal(state.lines, { "ec" }, "lines")
 	equal(state.title, " Cmdline ", "title")
 	equal(state.level, 1, "level")
 	local config = vim.api.nvim_win_get_config(state.win)
@@ -127,6 +127,29 @@ test("width grows and is capped", function()
 	equal(vim.api.nvim_win_get_config(ui._state().win).width, 120 - 4, "capped")
 end)
 
+test("width stays positive on a tiny editor", function()
+	local ui = fresh()
+	vim.o.columns = 4
+	show(ui, "ec")
+	truthy(ui._state().visible, "shown")
+	equal(vim.api.nvim_win_get_config(ui._state().win).width, 1, "clamped to 1")
+end)
+
+test("icon is inline virtual text", function()
+	local ui = fresh()
+	ui.handle("cmdline_block_show", { { { 0, "if 1" } } })
+	show(ui, "ec")
+	local ns = vim.api.nvim_get_namespaces()["k6e.ui.text"]
+	local marks = vim.api.nvim_buf_get_extmarks(ui._state().buf, ns, 0, -1, { details = true })
+	local icons = vim.tbl_filter(function(mark)
+		return mark[4].virt_text ~= nil
+	end, marks)
+	equal(#icons, 1, "one icon mark")
+	equal({ icons[1][2], icons[1][3] }, { 1, 0 }, "icon at col 0 of the text line")
+	equal(icons[1][4].virt_text, { { CMDLINE .. " ", "K6eUiIcon" } }, "icon text")
+	equal(icons[1][4].virt_text_pos, "inline", "inline")
+end)
+
 local function cursor_mark(ui)
 	local ns = vim.api.nvim_get_namespaces()["k6e.ui.cursor"]
 	local marks = vim.api.nvim_buf_get_extmarks(ui._state().buf, ns, 0, -1, { details = true })
@@ -138,44 +161,44 @@ test("fake cursor", function()
 	local ui = fresh()
 	show(ui, "ec", 2)
 	local mark = cursor_mark(ui)
-	equal({ mark[2], mark[3] }, { 0, #CMDLINE + 1 + 2 }, "end of line position")
+	equal({ mark[2], mark[3] }, { 0, 2 }, "end of line position")
 	equal(mark[4].virt_text, { { " ", "K6eUiCursor" } }, "end of line virt text")
 
 	ui.handle("cmdline_pos", 1, 1)
 	mark = cursor_mark(ui)
-	equal({ mark[2], mark[3] }, { 0, #CMDLINE + 1 + 1 }, "mid line position")
+	equal({ mark[2], mark[3] }, { 0, 1 }, "mid line position")
 	equal(mark[4].hl_group, "K6eUiCursor", "mid line highlight")
-	equal(mark[4].end_col, #CMDLINE + 1 + 2, "covers one char")
+	equal(mark[4].end_col, 2, "covers one char")
 end)
 
 test("special char", function()
 	local ui = fresh()
 	show(ui, "ec", 1)
 	ui.handle("cmdline_special_char", "^", true, 1)
-	equal(ui._state().lines, { CMDLINE .. " e^c" }, "inserted")
+	equal(ui._state().lines, { "e^c" }, "inserted")
 	show(ui, "ec", 1)
-	equal(ui._state().lines, { CMDLINE .. " ec" }, "replaced by next show")
+	equal(ui._state().lines, { "ec" }, "replaced by next show")
 end)
 
 test("literal newline in cmdline", function()
 	local ui = fresh()
 	show(ui, 'echo "a\nb"', 7)
-	equal(ui._state().lines, { CMDLINE .. ' echo "a\0b"' }, "NL shown as NUL (^@)")
-	equal(cursor_mark(ui)[3], #CMDLINE + 1 + 7, "byte offsets kept")
+	equal(ui._state().lines, { 'echo "a\0b"' }, "NL shown as NUL (^@)")
+	equal(cursor_mark(ui)[3], 7, "byte offsets kept")
 end)
 
 test("block lines", function()
 	local ui = fresh()
 	ui.handle("cmdline_block_show", { { { 0, "lua <<EOF" } } })
 	show(ui, "print(1)")
-	equal(ui._state().lines, { "lua <<EOF", CMDLINE .. " print(1)" }, "block then text")
+	equal(ui._state().lines, { "lua <<EOF", "print(1)" }, "block then text")
 	equal(vim.api.nvim_win_get_config(ui._state().win).height, 2, "height")
 	equal(vim.g.ui_cmdline_pos[1], vim.api.nvim_win_get_config(ui._state().win).row + 3, "pos row on text line")
 	ui.handle("cmdline_block_append", { { 0, "print(1)" } })
 	show(ui, "")
-	equal(ui._state().lines, { "lua <<EOF", "print(1)", CMDLINE .. " " }, "appended")
+	equal(ui._state().lines, { "lua <<EOF", "print(1)", "" }, "appended")
 	ui.handle("cmdline_block_hide")
-	equal(ui._state().lines, { CMDLINE .. " " }, "block hidden")
+	equal(ui._state().lines, { "" }, "block hidden")
 end)
 
 test("nested level", function()
@@ -186,18 +209,55 @@ test("nested level", function()
 	equal(ui._state().level, 2, "level 2 shown")
 	ui.handle("cmdline_hide", 2, false)
 	equal(ui._state().title, " Cmdline ", "level 1 title")
-	equal(ui._state().lines, { CMDLINE .. " ec" }, "level 1 lines")
+	equal(ui._state().lines, { "ec" }, "level 1 lines")
 	truthy(ui._state().visible, "still visible")
 	ui.handle("cmdline_hide", 1, false)
 	truthy(not ui._state().visible, "closed")
 end)
 
+--- Highlight groups of the treesitter marks covering byte `col` of the text line.
+local function groups_at(ui, col)
+	local ns = vim.api.nvim_get_namespaces()["k6e.ui.text"]
+	local marks = vim.api.nvim_buf_get_extmarks(ui._state().buf, ns, 0, -1, { details = true })
+	local groups = {}
+	for _, mark in ipairs(marks) do
+		local d = mark[4]
+		if d.hl_group and mark[3] <= col and col < d.end_col then
+			groups[#groups + 1] = d.hl_group
+		end
+	end
+	return groups
+end
+
+local function has(groups, pattern)
+	for _, group in ipairs(groups) do
+		if group:find(pattern) then
+			return true
+		end
+	end
+	return false
+end
+
 test("treesitter highlighting", function()
 	local ui = fresh()
-	show(ui, "ec")
-	truthy(vim.treesitter.highlighter.active[ui._state().buf], "vim highlighter started")
-	show(ui, "", 0, "", 1, "Name: ")
-	truthy(not vim.treesitter.highlighter.active[ui._state().buf], "no highlighter for prompt")
+	show(ui, "lua print(1)")
+	local print_groups = groups_at(ui, 4)
+	truthy(has(print_groups, "^@function.*%.lua$"), "lua function capture on print: " .. vim.inspect(print_groups))
+	truthy(has(groups_at(ui, 10), "^@number%.lua$"), "lua number capture: " .. vim.inspect(groups_at(ui, 10)))
+	equal(groups_at(ui, 0), {}, "lua prefix not parsed as lua")
+
+	show(ui, "=1+1")
+	truthy(has(groups_at(ui, 1), "^@number%.lua$"), "= expression parsed as lua: " .. vim.inspect(groups_at(ui, 1)))
+	equal(groups_at(ui, 0), {}, "= prefix not parsed")
+
+	show(ui, "echo 1")
+	truthy(has(groups_at(ui, 0), "%.vim$"), "vim capture on echo: " .. vim.inspect(groups_at(ui, 0)))
+
+	show(ui, "!ls")
+	truthy(ui._state().visible, "shell kind renders without a bash parser")
+
+	show(ui, "x", 1, "", 1, "Name: ")
+	equal(groups_at(ui, 0), {}, "no highlighting for prompt")
 end)
 
 test("attach defines highlights", function()
@@ -205,6 +265,7 @@ test("attach defines highlights", function()
 	ui.attach()
 	equal(ui._attached, true, "attached")
 	equal(vim.api.nvim_get_hl(0, { name = "K6eUiCursor" }).link, "Cursor", "cursor link")
+	equal(vim.api.nvim_get_hl(0, { name = "K6eUiIcon" }).link, "Special", "icon link")
 	ui.detach()
 	equal(ui._attached, false, "detached")
 end)
@@ -273,7 +334,7 @@ test("child nvim cmdline", function()
 		truthy(
 			vim.wait(5000, function()
 				local s = state()
-				return s.visible and vim.deep_equal(s.lines, { CMDLINE .. " ec" })
+				return s.visible and vim.deep_equal(s.lines, { "ec" })
 			end, 10),
 			"popup not shown: " .. vim.inspect(state())
 		)

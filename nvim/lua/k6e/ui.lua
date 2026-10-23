@@ -13,6 +13,8 @@ local ICONS = {
 
 local ns = vim.api.nvim_create_namespace("k6e.ui")
 local cursor_ns = vim.api.nvim_create_namespace("k6e.ui.cursor")
+--- Icon and syntax highlight marks on the text line.
+local text_ns = vim.api.nvim_create_namespace("k6e.ui.text")
 local group = vim.api.nvim_create_augroup("k6e.ui", { clear = true })
 
 ---@class k6e.ui.Kind
@@ -38,9 +40,6 @@ local buf
 local win
 ---@type { title: string, level: integer }?
 local shown
---- Treesitter language currently started on `buf`.
----@type string?
-local started_lang
 
 M._attached = false
 
@@ -87,6 +86,7 @@ end
 
 local function define_highlights()
 	vim.api.nvim_set_hl(0, "K6eUiCursor", { link = "Cursor", default = true })
+	vim.api.nvim_set_hl(0, "K6eUiIcon", { link = "Special", default = true })
 end
 
 local function close()
@@ -97,22 +97,46 @@ local function close()
 	vim.g.ui_cmdline_pos = nil
 end
 
----@param lang string?
-local function highlight(lang)
-	if lang == started_lang then
-		return
+--- Command prefixes that are not code in the kind's language, e.g. `lua ` before a chunk.
+local PREFIXES = {
+	lua = { "^%s*lua%s*=?%s*", "^%s*=%s*" },
+	bash = { "^%s*!%s*" },
+}
+
+--- Highlight `text` on `row` as `lang` with treesitter captures, skipping the command prefix.
+--- Uses a string parser so the prefix never reaches the parser.
+---@param row integer
+---@param text string
+---@param lang string
+local function highlight(row, text, lang)
+	local skip = 0
+	for _, pattern in ipairs(PREFIXES[lang] or {}) do
+		local _, e = text:find(pattern)
+		if e then
+			skip = e
+			break
+		end
 	end
-	if started_lang then
-		pcall(vim.treesitter.stop, buf)
-		started_lang = nil
-	end
-	if not lang then
-		return
-	end
-	local ok, added = pcall(vim.treesitter.language.add, lang)
-	if ok and added and pcall(vim.treesitter.start, buf, lang) then
-		started_lang = lang
-	end
+	local code = text:sub(skip + 1)
+	local parser = vim.treesitter.get_string_parser(code, lang)
+	parser:parse(true)
+	parser:for_each_tree(function(tree, ltree)
+		local query = vim.treesitter.query.get(ltree:lang(), "highlights")
+		if not query then
+			return
+		end
+		for id, node in query:iter_captures(tree:root(), code) do
+			local name = query.captures[id]
+			if not name:find("^_") and name ~= "spell" and name ~= "nospell" then
+				local _, start_col, _, end_col = node:range()
+				vim.api.nvim_buf_set_extmark(buf, text_ns, row, skip + start_col, {
+					end_col = skip + end_col,
+					hl_group = "@" .. name .. "." .. ltree:lang(),
+					priority = vim.hl.priorities.treesitter,
+				})
+			end
+		end
+	end)
 end
 
 ---@param entry k6e.ui.Level
@@ -159,17 +183,18 @@ local function render()
 	end
 	local entry = levels[level]
 	local kind = M.kind(entry.firstc, entry.text, entry.prompt)
-	local lines = vim.list_extend(vim.list_slice(block), { kind.icon .. " " .. display_text(entry) })
+	local lines = vim.list_extend(vim.list_slice(block), { display_text(entry) })
 	local last = lines[#lines]
+	local row = #lines - 1
 
 	if not (buf and vim.api.nvim_buf_is_valid(buf)) then
 		buf = vim.api.nvim_create_buf(false, true)
 		vim.bo[buf].undolevels = -1
-		started_lang = nil
 	end
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
-	local width = math.min(math.max(60, vim.api.nvim_strwidth(last) + 2), vim.o.columns - 4)
+	local icon_width = vim.api.nvim_strwidth(kind.icon .. " ")
+	local width = math.max(1, math.min(math.max(60, icon_width + vim.api.nvim_strwidth(last) + 2), vim.o.columns - 4))
 	local config = {
 		relative = "editor",
 		row = math.floor(vim.o.lines * 0.25),
@@ -191,10 +216,17 @@ local function render()
 	end
 	shown = { title = kind.title, level = level }
 
-	highlight(kind.lang)
-	place_cursor(last, #lines - 1, #kind.icon + 1 + entry.pos)
+	vim.api.nvim_buf_clear_namespace(buf, text_ns, 0, -1)
+	vim.api.nvim_buf_set_extmark(buf, text_ns, row, 0, {
+		virt_text = { { kind.icon .. " ", "K6eUiIcon" } },
+		virt_text_pos = "inline",
+	})
+	if kind.lang then
+		pcall(highlight, row, last, kind.lang)
+	end
+	place_cursor(last, row, entry.pos)
 	-- Screen position of the text line: 1-based row below the top border, 0-based col after the icon.
-	vim.g.ui_cmdline_pos = { config.row + 1 + #lines, config.col + 1 + vim.api.nvim_strwidth(kind.icon .. " ") }
+	vim.g.ui_cmdline_pos = { config.row + 1 + #lines, config.col + 1 + icon_width }
 end
 
 local handlers = {}
