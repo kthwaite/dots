@@ -105,6 +105,7 @@ Run `:Keymaps` to open the same keymap ownership picker.
 | n | `<leader>te` | Diagnostics picker (Snacks) |
 | n | `<leader>tt` | Todo list (Picker) |
 | n | `<leader>tq` | Todo list (Quickfix) |
+| c | `<S-CR>` | Redirect cmdline output to a split |
 | n | `<leader>u` | Toggle undo tree |
 | n | `<leader>z` | Toggle Zen mode |
 | n | `<leader>rN` | Rename current file |

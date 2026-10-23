@@ -353,6 +353,24 @@ test("child nvim cmdline", function()
 	end
 end)
 
+test("redirect shows command output in a scratch split", function()
+	local ui = require("k6e.ui")
+	ui.redirect("echo 'hi'")
+	local b = vim.api.nvim_get_current_buf()
+	equal(vim.bo[b].filetype, "k6e-redirect", "filetype")
+	equal(vim.api.nvim_buf_get_lines(b, 0, -1, false), { "hi" }, "output lines")
+	vim.cmd("bwipeout!")
+end)
+
+test("redirect shows the error when the command fails", function()
+	local ui = require("k6e.ui")
+	ui.redirect("bogus_cmd")
+	local b = vim.api.nvim_get_current_buf()
+	equal(vim.bo[b].filetype, "k6e-redirect", "filetype")
+	truthy(vim.api.nvim_buf_get_lines(b, 0, 1, false)[1]:find("E492", 1, true), "E492 expected")
+	vim.cmd("bwipeout!")
+end)
+
 local failures = {}
 for _, case in ipairs(tests) do
 	local ok, err = pcall(case.callback)

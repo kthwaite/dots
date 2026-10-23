@@ -110,7 +110,7 @@ end
 local expected_mappings = {
 	{ chord = "gD", lhs = "gD", desc = "Go to declaration", operation = vim.lsp.buf.declaration },
 	{ chord = "gd", lhs = "gd", desc = "Go to definition", operation = vim.lsp.buf.definition },
-	{ chord = "K", lhs = "K", desc = "Hover documentation", operation = vim.lsp.buf.hover },
+	{ chord = "K", lhs = "K", desc = "Hover documentation" },
 	{ chord = "gi", lhs = "gi", desc = "Go to implementation", operation = vim.lsp.buf.implementation },
 	{ chord = "<space>wl", lhs = " wl", desc = "List workspace folders" },
 	{ chord = "<space>D", lhs = " D", desc = "Go to type definition", operation = vim.lsp.buf.type_definition },

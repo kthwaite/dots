@@ -7,7 +7,9 @@ local lsp_scope = { lsp = {} }
 
 lsp.eager("gD", vim.lsp.buf.declaration, "Go to declaration", { scope = lsp_scope })
 lsp.eager("gd", vim.lsp.buf.definition, "Go to definition", { scope = lsp_scope })
-lsp.eager("K", vim.lsp.buf.hover, "Hover documentation", { scope = lsp_scope })
+lsp.eager("K", function()
+	vim.lsp.buf.hover({ border = "rounded" })
+end, "Hover documentation", { scope = lsp_scope })
 lsp.eager("gi", vim.lsp.buf.implementation, "Go to implementation", { scope = lsp_scope })
 lsp.eager("<space>wl", function()
 	print(vim.inspect(vim.lsp.buf.list_workspace_folders()))

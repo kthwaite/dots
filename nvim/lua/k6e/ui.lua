@@ -317,6 +317,30 @@ function M.detach()
 	pcall(close)
 end
 
+--- Run a cmdline and show its output in a scratch split.
+---@param cmd string
+function M.redirect(cmd)
+	local ok, result = pcall(vim.api.nvim_exec2, cmd, { output = true })
+	local text = ok and result.output or tostring(result)
+	vim.cmd("botright new")
+	local b = vim.api.nvim_get_current_buf()
+	vim.bo[b].buftype = "nofile"
+	vim.bo[b].bufhidden = "wipe"
+	vim.bo[b].filetype = "k6e-redirect"
+	vim.api.nvim_buf_set_lines(b, 0, -1, false, vim.split(text, "\n", { plain = true }))
+end
+
+function M.setup()
+	require("core.keymaps").owner("ui").eager("<S-CR>", function()
+		local cmd = vim.fn.getcmdline()
+		vim.schedule(function()
+			require("k6e.ui").redirect(cmd)
+		end)
+		return "<C-c>"
+	end, "Redirect Cmdline", { mode = "c", expr = true })
+	M.attach()
+end
+
 ---@return { visible: boolean, win: integer?, buf: integer?, lines: string[], title: string?, level: integer? }
 function M._state()
 	local visible = win ~= nil and vim.api.nvim_win_is_valid(win)

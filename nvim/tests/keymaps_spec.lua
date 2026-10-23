@@ -884,6 +884,7 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 	end
 
 	local keymaps = require("core.keymaps")
+	require("k6e.ui").setup()
 	keymaps.activate()
 
 	local picker_options
@@ -911,7 +912,6 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 		["folke/snacks.nvim"] = "snacks",
 		["hedyhli/outline.nvim"] = "outline",
 		["danymat/neogen"] = "neogen",
-		["folke/noice.nvim"] = "noice",
 		["NeogitOrg/neogit"] = "neogit",
 	}
 	for plugin, owner in pairs(expected_owners) do
@@ -929,6 +929,14 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 			end
 		end
 	end
+
+	truthy(specs_by_name["folke/noice.nvim"] == nil, "noice must be removed")
+	truthy(specs_by_name["MunifTanjim/nui.nvim"] == nil, "nui must be removed")
+	equal(specs_by_name["folke/snacks.nvim"].opts.notifier.enabled, true, "snacks notifier must be enabled")
+	local redirect_rows = matching_rows("<S-CR>", "c")
+	equal(#redirect_rows, 1, "<S-CR> must have one cmdline claim")
+	equal(redirect_rows[1].owner, "ui", "<S-CR> must be owned by ui")
+	require("k6e.ui").detach()
 
 	local help_rows = matching_rows("<leader>sh", "n")
 	equal(#help_rows, 1, "<leader>sh must have exactly one claim")

@@ -1,44 +1,8 @@
-local keymaps = require("core.keymaps")
-local noice = keymaps.owner("noice")
-
 return {
 	{
 		"MeanderingProgrammer/render-markdown.nvim",
 		dependencies = { "kthwaite/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
 		opts = {},
-	},
-	{
-		"folke/noice.nvim",
-		event = "VeryLazy",
-		dependencies = {
-			"MunifTanjim/nui.nvim",
-		},
-		opts = {
-			cmdline = {
-				enabled = true,
-				view = "cmdline_popup",
-				format = {},
-			},
-			lsp = {
-				override = {
-					["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-					["vim.lsp.util.stylize_markdown"] = true,
-					["cmp.entry.get_documentation"] = true,
-				},
-			},
-			presets = {
-				bottom_search = false,
-				command_palette = true,
-				long_message_to_split = true,
-				lsp_doc_border = true,
-				inc_rename = true,
-			},
-		},
-		keys = {
-			noice.lazy("<S-Enter>", function()
-				require("noice").redirect(vim.fn.getcmdline())
-			end, "Redirect Cmdline", { mode = "c" }),
-		},
 	},
 	-- # statusline
 	{

@@ -36,6 +36,7 @@ return {
 		lazy = false,
 		---@type snacks.Config
 		opts = {
+			notifier = { enabled = true },
 			indent = {
 				enabled = true,
 				animate = {
