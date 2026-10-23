@@ -616,6 +616,58 @@ isolated("annotates unavailable Snacks inspection with owner and source", functi
 	)
 end)
 
+isolated("checks extra plugin modules without executing them", function()
+	local original_lazy = package.loaded.lazy
+	local original_lazy_config = package.loaded["core.02_lazy"]
+	local original_notify = vim.notify
+	local original_rtp = vim.o.runtimepath
+	local extra_root = vim.fn.tempname()
+	vim.fn.mkdir(extra_root .. "/lua/plugins", "p")
+	vim.fn.writefile(
+		{ "_G.k6e_extra_evaluations = (_G.k6e_extra_evaluations or 0) + 1", "return {}" },
+		extra_root .. "/lua/plugins/k6e_counted.lua"
+	)
+	vim.opt.runtimepath:append(extra_root)
+	_G.k6e_extra_evaluations = 0
+	local captured
+	local errors = {}
+	package.loaded.lazy = {
+		setup = function(config)
+			captured = config
+		end,
+	}
+	vim.notify = function(message, level)
+		if level == vim.log.levels.ERROR then
+			errors[#errors + 1] = message
+		end
+	end
+	vim.fn.setenv("K6E_NVIM_EXTRA_PLUGINS", "k6e_counted,k6e_missing")
+	package.loaded["core.02_lazy"] = nil
+
+	local ok, err = xpcall(function()
+		require("core.02_lazy")
+	end, debug.traceback)
+	vim.fn.setenv("K6E_NVIM_EXTRA_PLUGINS", vim.NIL)
+	vim.notify = original_notify
+	vim.o.runtimepath = original_rtp
+	package.loaded.lazy = original_lazy
+	package.loaded["core.02_lazy"] = original_lazy_config
+	if not ok then
+		error(err)
+	end
+
+	equal(_G.k6e_extra_evaluations, 0, "build_spec must not execute extra modules")
+	local imported = {}
+	for _, spec in ipairs(captured.spec) do
+		imported[spec.import or ""] = true
+	end
+	truthy(imported["plugins.k6e_counted"], "existing extra module must be imported")
+	truthy(not imported["plugins.k6e_missing"], "missing extra module must not be imported")
+	equal(#errors, 1, "missing extra module must notify once")
+	truthy(errors[1]:find("plugins.k6e_missing", 1, true) ~= nil, "notification must name the missing module")
+	_G.k6e_extra_evaluations = nil
+end)
+
 isolated("includes the conditional Neogit fallback in the default Lazy graph", function()
 	local original_lazy = package.loaded.lazy
 	local original_lazy_config = package.loaded["core.02_lazy"]

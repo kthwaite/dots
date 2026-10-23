@@ -65,8 +65,10 @@ local function build_spec(...)
 		if extra_plugins ~= nil then
 			for _, plugin in ipairs(extra_plugins) do
 				local resolved_name = "plugins." .. plugin
-				local ok, _ = pcall(require, resolved_name)
-				if not ok then
+				local path = "lua/" .. (resolved_name:gsub("%.", "/"))
+				local found = vim.api.nvim_get_runtime_file(path .. ".lua", false)[1]
+					or vim.api.nvim_get_runtime_file(path .. "/init.lua", false)[1]
+				if not found then
 					vim.notify("Failed to load plugin: " .. resolved_name, vim.log.levels.ERROR)
 				else
 					-- vim.notify("Loading extra plugin: " .. resolved_name, vim.log.levels.DEBUG)

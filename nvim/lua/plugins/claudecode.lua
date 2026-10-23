@@ -1,12 +1,6 @@
--- 02_lazy requires an extra module and Lazy then imports it again, which would claim every key twice.
-local cache_key = "k6e.plugins.claudecode.specs"
-if package.loaded[cache_key] then
-	return package.loaded[cache_key]
-end
-
 local claudecode = require("core.keymaps").owner("claudecode")
 
-local specs = {
+return {
 	{
 		"coder/claudecode.nvim",
 		dependencies = { "folke/snacks.nvim" },
@@ -21,5 +15,3 @@ local specs = {
 		},
 	},
 }
-package.loaded[cache_key] = specs
-return specs
