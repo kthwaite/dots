@@ -111,6 +111,18 @@ Run `:Keymaps` to open the same keymap ownership picker.
 | n | `<leader>rN` | Rename current file |
 | n | `<leader>gn` | Generate docstring (Neogen) |
 
+### Claude Code (claudecode.nvim)
+
+Opt-in per machine: enable via `lua/plugins/extras/claude.lua` returning `{ { import = "plugins.claudecode" } }` or via `K6E_NVIM_EXTRA_PLUGINS=claudecode`.
+
+| Mode | Key | Action |
+|------|-----|--------|
+| n/t | `<C-,>` | Toggle Claude |
+| v | `<leader>cs` | Send selection to Claude |
+| n | `<leader>cb` | Add buffer to Claude |
+| n | `<leader>cy` | Accept Claude diff |
+| n | `<leader>cn` | Deny Claude diff |
+
 ### Plugin Management
 
 | Mode | Key | Action |

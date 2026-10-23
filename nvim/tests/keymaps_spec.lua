@@ -874,6 +874,7 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 		"plugins.core.treesitter",
 		"plugins.core.ui",
 		"plugins.neogit",
+		"plugins.claudecode",
 	}
 	local specs_by_name = {}
 	for _, module_name in ipairs(module_names) do
@@ -913,6 +914,7 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 		["hedyhli/outline.nvim"] = "outline",
 		["danymat/neogen"] = "neogen",
 		["NeogitOrg/neogit"] = "neogit",
+		["coder/claudecode.nvim"] = "claudecode",
 	}
 	for plugin, owner in pairs(expected_owners) do
 		local spec = specs_by_name[plugin]
@@ -927,6 +929,26 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 				equal(rows[1].description, key.desc, string.format("%s %s description changed", plugin, key[1]))
 				equal(rows[1].realization, "lazy", string.format("%s %s must use the Lazy adapter", plugin, key[1]))
 			end
+		end
+	end
+
+	truthy(specs_by_name["greggh/claude-code.nvim"] == nil, "claude-code.nvim must be replaced")
+	local claudecode_spec = specs_by_name["coder/claudecode.nvim"]
+	equal(claudecode_spec.opts.terminal.provider, "snacks", "claudecode must use the snacks terminal")
+	local claudecode_keys = {
+		{ "<C-,>", { "n", "t" }, "Toggle Claude" },
+		{ "<leader>cs", { "v" }, "Send selection to Claude" },
+		{ "<leader>cb", { "n" }, "Add buffer to Claude" },
+		{ "<leader>cy", { "n" }, "Accept Claude diff" },
+		{ "<leader>cn", { "n" }, "Deny Claude diff" },
+	}
+	for _, expected in ipairs(claudecode_keys) do
+		for _, mode in ipairs(expected[2]) do
+			local rows = matching_rows(expected[1], mode)
+			equal(#rows, 1, string.format("claudecode %s (%s) must have one claim", expected[1], mode))
+			equal(rows[1].owner, "claudecode", expected[1] .. " owner changed")
+			equal(rows[1].description, expected[3], expected[1] .. " description changed")
+			equal(rows[1].realization, "lazy", expected[1] .. " must use the Lazy adapter")
 		end
 	end
 
