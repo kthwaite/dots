@@ -13,7 +13,8 @@ end
 
 return {
 	{
-		"folke/which-key.nvim",
+		dir = vim.fn.stdpath("config") .. "/vendor/which-key.nvim",
+		name = "which-key.nvim",
 		event = "VeryLazy",
 		opts = {
 			filter = function()

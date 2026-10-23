@@ -769,7 +769,7 @@ isolated("routes completion Tab behavior through co-located owners", function()
 		local specs = require("plugins.core.completion")
 		local specs_by_name = {}
 		for _, spec in ipairs(specs) do
-			specs_by_name[spec[1]] = spec
+			specs_by_name[spec[1] or spec.name] = spec
 		end
 		specs_by_name["L3MON4D3/LuaSnip"].config()
 		equal(loader_calls, 1, "LuaSnip loader behavior changed")
@@ -879,7 +879,7 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 	for _, module_name in ipairs(module_names) do
 		package.loaded[module_name] = nil
 		for _, spec in ipairs(require(module_name)) do
-			specs_by_name[spec[1]] = spec
+			specs_by_name[spec[1] or spec.name] = spec
 		end
 	end
 
@@ -908,7 +908,7 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 	end
 
 	local expected_owners = {
-		["folke/which-key.nvim"] = "which-key",
+		["which-key.nvim"] = "which-key",
 		["folke/snacks.nvim"] = "snacks",
 		["hedyhli/outline.nvim"] = "outline",
 		["danymat/neogen"] = "neogen",
