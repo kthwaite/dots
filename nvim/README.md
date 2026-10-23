@@ -3,8 +3,8 @@
 Respects the following environment variables:
 
 - `K6E_NVIM_EXTRA_PLUGINS`: comma-separated list of plugin specs in `lua/plugins` which Lazy will attempt to source
-- `K6E_SESSION_PLUGINS`: comma-separated list of plugin specs in `lua/plugins` which Lazy will attempt to source; implicitly ephemeral, for this session only 
-- `K6E_COPILOT_LUA`: if 1, use copilot-lua plugin, rather than copilot; requires that the `copulot` plugin is loaded
+- `K6E_NVIM_SESSION_PLUGINS`: comma-separated list of plugin specs in `lua/plugins` which Lazy will attempt to source; implicitly ephemeral, for this session only 
+- `K6E_COPILOT_LUA`: if 1, use copilot-lua plugin, rather than copilot; requires that the `copilot` plugin is loaded
 
 ## Keybindings
 
@@ -39,6 +39,7 @@ Leader key is `<Space>`.
 | n | `<leader>bb` | Move buffer left |
 | n | `<leader>bn` | Move buffer right |
 | n | `<leader>bp` | Pick buffer |
+| n | `]b` / `[b` | Next/previous buffer (tabline order) |
 
 ### LSP
 
