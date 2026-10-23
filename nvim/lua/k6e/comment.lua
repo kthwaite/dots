@@ -235,7 +235,8 @@ function M.setup()
 
 	owner.eager("gbc", function()
 		local cursor = vim.api.nvim_win_get_cursor(0)
-		M.toggle_block(cursor[1], cursor[1])
+		local last = math.min(cursor[1] + vim.v.count1 - 1, vim.api.nvim_buf_line_count(0))
+		M.toggle_block(cursor[1], last)
 		pcall(vim.api.nvim_win_set_cursor, 0, cursor)
 	end, "Toggle block comment", { mode = "n" })
 
