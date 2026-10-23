@@ -92,6 +92,7 @@ require("k6e.comment").setup()
 require("k6e.todo").setup()
 require("k6e.tabline").setup()
 require("k6e.ui").setup()
+require("k6e.luadev").setup()
 require("core.keymaps").activate()
 
 return M

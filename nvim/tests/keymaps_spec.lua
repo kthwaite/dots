@@ -932,6 +932,7 @@ isolated("routes authored mappings through reviewed ownership claims", function(
 
 	truthy(specs_by_name["folke/noice.nvim"] == nil, "noice must be removed")
 	truthy(specs_by_name["MunifTanjim/nui.nvim"] == nil, "nui must be removed")
+	truthy(specs_by_name["folke/lazydev.nvim"] == nil, "lazydev must be removed")
 	equal(specs_by_name["folke/snacks.nvim"].opts.notifier.enabled, true, "snacks notifier must be enabled")
 	local redirect_rows = matching_rows("<S-CR>", "c")
 	equal(#redirect_rows, 1, "<S-CR> must have one cmdline claim")
